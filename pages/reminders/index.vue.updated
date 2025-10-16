@@ -1,0 +1,474 @@
+<template>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">用药提醒</h1>
+      <button 
+        @click="openAddModal"
+        class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+      >
+        + 添加提醒
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="bg-white rounded-md-lg shadow-md p-6 text-center">
+      <p>加载中...</p>
+    </div>
+
+    <!-- Active Reminders -->
+    <div v-else class="bg-white rounded-md-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">今日提醒</h2>
+      <div v-if="todayReminders.length === 0" class="text-center text-md-on-surface-variant py-12">
+        <div class="text-6xl mb-4">⏰</div>
+        <p class="text-lg">暂无今日提醒</p>
+        <p class="text-sm mt-2">设置用药提醒，确保按时服药</p>
+      </div>
+      <div v-else class="space-y-3">
+        <div 
+          v-for="reminder in todayReminders" 
+          :key="reminder.id"
+          class="border border-md-surface-variant rounded-md-md p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+        >
+          <div class="flex-1">
+            <h3 class="font-semibold">{{ reminder.title }}</h3>
+            <div class="flex items-center gap-2">
+              <p class="text-sm text-md-on-surface-variant">
+                {{ reminder.medicine?.name }}{{ reminder.medicine?.brand ? `（${reminder.medicine?.brand}）` : '' }} - {{ formatTime(reminder.reminderTime) }}
+              </p>
+              <span v-if="getDosage(reminder.description)" class="px-2 py-0.5 bg-md-tertiary-container text-md-on-tertiary-container rounded-full text-xs">
+                {{ getDosage(reminder.description) }}{{ reminder.medicine?.quantityUnit || '单位' }}
+              </span>
+            </div>
+            <p v-if="getDescription(reminder.description)" class="text-sm text-md-on-surface-variant mt-1">
+              {{ getDescription(reminder.description) }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              @click="completeAndRecord(reminder.id)"
+              class="bg-md-primary text-md-on-primary px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              完成并记录
+            </button>
+            <button 
+              @click="openEditModal(reminder)"
+              class="bg-md-surface text-md-primary border border-md-outline-variant px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              编辑
+            </button>
+            <button 
+              @click="deleteReminder(reminder.id)"
+              class="bg-md-error-container text-md-on-error-container px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Future Reminders -->
+    <div class="bg-white rounded-md-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">即将到来的提醒</h2>
+      <div v-if="futureReminders.length === 0" class="text-center text-md-on-surface-variant py-12">
+        <p class="text-lg">暂无未来提醒</p>
+      </div>
+      <div v-else class="space-y-3">
+        <div 
+          v-for="reminder in futureReminders" 
+          :key="reminder.id"
+          class="border border-md-surface-variant rounded-md-md p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+        >
+          <div class="flex-1">
+            <h3 class="font-semibold">{{ reminder.title }}</h3>
+            <div class="flex items-center gap-2">
+              <p class="text-sm text-md-on-surface-variant">
+                {{ reminder.medicine?.name }}{{ reminder.medicine?.brand ? `（${reminder.medicine?.brand}）` : '' }} - {{ formatDateAndTime(reminder.reminderTime) }}
+              </p>
+              <span v-if="getDosage(reminder.description)" class="px-2 py-0.5 bg-md-tertiary-container text-md-on-tertiary-container rounded-full text-xs">
+                {{ getDosage(reminder.description) }}{{ reminder.medicine?.quantityUnit || '单位' }}
+              </span>
+              <span class="px-2 py-0.5 bg-md-secondary-container text-md-on-secondary-container rounded-full text-xs">
+                {{ getFrequencyText(reminder.frequency) }}
+              </span>
+            </div>
+            <p v-if="getDescription(reminder.description)" class="text-sm text-md-on-surface-variant mt-1">
+              {{ getDescription(reminder.description) }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              @click="openEditModal(reminder)"
+              class="bg-md-surface text-md-primary border border-md-outline-variant px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              编辑
+            </button>
+            <button 
+              @click="deleteReminder(reminder.id)"
+              class="bg-md-error-container text-md-on-error-container px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past Reminders -->
+    <div class="bg-white rounded-md-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">已完成提醒</h2>
+      <div v-if="pastReminders.length === 0" class="text-center text-md-on-surface-variant py-12">
+        <p class="text-lg">暂无完成记录</p>
+      </div>
+      <div v-else class="space-y-3">
+        <div 
+          v-for="reminder in pastReminders" 
+          :key="reminder.id"
+          class="border border-md-surface-variant rounded-md-md p-4 flex items-center justify-between hover:shadow-md transition-shadow bg-gray-50"
+        >
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold">{{ reminder.title }}</h3>
+              <span class="px-2 py-0.5 bg-md-primary-container text-md-on-primary-container rounded-full text-xs">
+                已完成
+              </span>
+            </div>
+            <p class="text-sm text-md-on-surface-variant">
+              {{ reminder.medicine?.name }}{{ reminder.medicine?.brand ? `（${reminder.medicine?.brand}）` : '' }} - {{ formatDateAndTime(reminder.completedAt || reminder.reminderTime) }}
+            </p>
+            <p v-if="getDescription(reminder.description)" class="text-sm text-md-on-surface-variant mt-1">
+              {{ getDescription(reminder.description) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 确认记录服用时间的弹窗 -->
+    <div v-if="showTimeConfirmation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-md-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+        <div class="bg-md-primary text-md-on-primary px-6 py-4 rounded-t-md-lg flex justify-between items-center">
+          <h2 class="text-2xl font-bold">记录服用时间</h2>
+          <button @click="showTimeConfirmation = false" class="text-md-on-primary hover:opacity-80">
+            <span class="text-2xl">&times;</span>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <p>请选择药物服用的时间：</p>
+          
+          <div class="space-y-2">
+            <div class="flex items-center">
+              <input 
+                type="radio" 
+                id="time-now" 
+                value="now" 
+                v-model="timeOption"
+                class="mr-2"
+              >
+              <label for="time-now">当前时间</label>
+            </div>
+            <div class="flex items-center">
+              <input 
+                type="radio" 
+                id="time-reminder" 
+                value="reminder" 
+                v-model="timeOption"
+                class="mr-2"
+              >
+              <label for="time-reminder">提醒时间</label>
+            </div>
+            <div class="flex items-center">
+              <input 
+                type="radio" 
+                id="time-custom" 
+                value="custom" 
+                v-model="timeOption"
+                class="mr-2"
+              >
+              <label for="time-custom">自定义时间</label>
+            </div>
+          </div>
+          
+          <!-- 自定义时间 -->
+          <div v-if="timeOption === 'custom'" class="mt-2">
+            <input 
+              type="datetime-local" 
+              v-model="customTime"
+              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm"
+            >
+          </div>
+          
+          <div class="flex gap-4 pt-4">
+            <button 
+              @click="showTimeConfirmation = false"
+              class="flex-1 bg-md-surface-variant text-md-on-surface-variant px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+            >
+              取消
+            </button>
+            <button 
+              @click="confirmTimeAndRecord"
+              class="flex-1 bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+            >
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <ReminderModal 
+      :is-open="isModalOpen" 
+      :reminder="selectedReminder" 
+      :medicines="medicines"
+      @close="closeModal" 
+      @success="fetchReminders" 
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useNotification } from '~/composables/useNotification';
+import { formatDateToFriendly, formatTimeOnly } from '~/utils/dateTime';
+import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime';
+
+definePageMeta({
+  layout: 'default',
+})
+
+// 状态
+const loading = ref(true)
+const reminders = ref<any[]>([])
+const medicines = ref<any[]>([])
+const isModalOpen = ref(false)
+const selectedReminder = ref(null)
+
+// 记录服用时间相关
+const showTimeConfirmation = ref(false)
+const currentReminderId = ref('')
+const timeOption = ref('now')
+const selectedTime = ref('')
+const reminderTime = ref('')
+const customTime = ref('')
+
+// 获取提醒列表
+const fetchReminders = async () => {
+  loading.value = true
+  try {
+    const data = await $fetch('/api/reminders')
+    reminders.value = data
+    loading.value = false
+  } catch (error) {
+    console.error('获取提醒失败', error)
+    loading.value = false
+  }
+}
+
+// 获取药品列表
+const fetchMedicines = async () => {
+  try {
+    const data = await $fetch('/api/medicines')
+    medicines.value = data
+  } catch (error) {
+    console.error('获取药品失败', error)
+  }
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchReminders()
+  fetchMedicines()
+})
+
+// 筛选今日提醒
+const todayReminders = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  return reminders.value
+    .filter(reminder => {
+      const reminderDate = new Date(reminder.reminderTime)
+      return !reminder.isCompleted && 
+             reminderDate >= today && 
+             reminderDate < tomorrow
+    })
+    .sort((a, b) => new Date(a.reminderTime).getTime() - new Date(b.reminderTime).getTime())
+})
+
+// 筛选未来提醒
+const futureReminders = computed(() => {
+  const tomorrow = new Date()
+  tomorrow.setHours(0, 0, 0, 0)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  
+  return reminders.value
+    .filter(reminder => {
+      const reminderDate = new Date(reminder.reminderTime)
+      return !reminder.isCompleted && 
+             reminderDate >= tomorrow
+    })
+    .sort((a, b) => new Date(a.reminderTime).getTime() - new Date(b.reminderTime).getTime())
+})
+
+// 筛选已完成提醒
+const pastReminders = computed(() => {
+  return reminders.value
+    .filter(reminder => reminder.isCompleted)
+    .sort((a, b) => {
+      const dateA = a.completedAt ? new Date(a.completedAt) : new Date(a.reminderTime)
+      const dateB = b.completedAt ? new Date(b.completedAt) : new Date(b.reminderTime)
+      return dateB.getTime() - dateA.getTime()
+    })
+})
+
+// 格式化时间
+const formatTime = (dateString: string) => {
+  return formatTimeOnly(new Date(dateString))
+}
+
+// 格式化日期和时间
+const formatDateAndTime = (dateString: string) => {
+  return formatDateToFriendly(new Date(dateString))
+}
+
+// 获取提醒频率文本
+const getFrequencyText = (frequency: string) => {
+  const frequencyMap: Record<string, string> = {
+    'once': '单次',
+    'daily': '每日',
+    'weekly': '每周',
+    'monthly': '每月',
+    'custom': '自定义'
+  }
+  return frequencyMap[frequency] || frequency
+}
+
+// 从描述JSON中获取用户描述
+const getDescription = (descriptionJson: string): string => {
+  if (!descriptionJson) return ''
+  
+  try {
+    const description = JSON.parse(descriptionJson)
+    return description.userDescription || ''
+  } catch (e) {
+    return descriptionJson
+  }
+}
+
+// 从描述JSON中获取剂量信息
+const getDosage = (descriptionJson: string): string | null => {
+  if (!descriptionJson) return null
+  
+  try {
+    const description = JSON.parse(descriptionJson)
+    return description.dosageAmount ? description.dosageAmount.toString() : null
+  } catch (e) {
+    return null
+  }
+}
+
+// 打开添加提醒模态框
+const openAddModal = () => {
+  selectedReminder.value = null
+  isModalOpen.value = true
+}
+
+// 打开编辑提醒模态框
+const openEditModal = (reminder: any) => {
+  selectedReminder.value = reminder
+  isModalOpen.value = true
+}
+
+// 关闭提醒模态框
+const closeModal = () => {
+  isModalOpen.value = false
+  selectedReminder.value = null
+}
+
+// 删除提醒
+const deleteReminder = async (id: string) => {
+  const { confirm } = useNotification()
+  
+  const result = await confirm('确认删除提醒？')
+  if (result) {
+    try {
+      await $fetch(`/api/reminders/${id}`, { method: 'DELETE' })
+      fetchReminders()
+      const { success } = useNotification()
+      success('提醒已删除')
+    } catch (error) {
+      console.error('删除提醒失败', error)
+      const { error: showError } = useNotification()
+      showError('删除失败，请重试')
+    }
+  }
+}
+
+// 打开完成并记录服用时间弹窗
+const completeAndRecord = async (id: string) => {
+  currentReminderId.value = id
+  
+  // 获取当前提醒
+  const reminder = reminders.value.find(r => r.id === id)
+  if (reminder) {
+    const now = new Date()
+    const time = new Date(reminder.reminderTime)
+    
+    // 默认选择当前时间
+    timeOption.value = 'now'
+    
+    // 当前时间作为默认选项
+    selectedTime.value = toLocalISOStringForInput(now)
+    
+    // 提醒时间作为选项
+    reminderTime.value = toLocalISOStringForInput(time)
+    
+    // 自定义时间默认为当前时间
+    customTime.value = toLocalISOStringForInput(now)
+    
+    // 显示弹窗
+    showTimeConfirmation.value = true
+  }
+}
+
+// 确认服用时间并完成记录
+const confirmTimeAndRecord = async () => {
+  try {
+    // 根据选择的选项确定最终时间
+    let finalTime = '';
+    
+    if (timeOption.value === 'now') {
+      finalTime = toLocalISOString(new Date());
+    } else if (timeOption.value === 'reminder') {
+      finalTime = reminderTime.value;
+    } else if (timeOption.value === 'custom') {
+      finalTime = customTime.value;
+    }
+    
+    // 发送完成记录的请求
+    await $fetch(`/api/reminders/${currentReminderId.value}/record`, {
+      method: 'POST',
+      body: {
+        usageTime: finalTime
+      }
+    })
+    
+    // 更新列表
+    fetchReminders()
+    
+    // 关闭弹窗
+    showTimeConfirmation.value = false
+    
+    // 显示成功消息
+    const { success } = useNotification()
+    success('已完成并记录服用')
+  } catch (error) {
+    console.error('记录服用失败', error)
+    const { error: showError } = useNotification()
+    showError('记录失败，请重试')
+  }
+}
+</script>

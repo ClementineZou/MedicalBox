@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 药物信息表
+model Medicine {
+  id          String   @id @default(cuid())
+  name        String   // 药品名称
+  brand       String   // 品牌/厂家，必填
+  category    String?  // 分类（如：感冒药、消炎药等）
+  controlTypes String   // 管制分类（逗号分隔字符串）
+  dosage      String   // 剂量规格，必填
+  dosageUnit  String   // 剂量单位，下拉选
+  quantity    Int      @default(0) // 数量（最小单位）
+  quantityUnit String  // 数量单位，下拉选
+  indications String?  // 适应症
+  usage       String?  // 用法用量
+  notes       String?  // 备注
+  expiryDate  DateTime // 有效期
+  approvalNo  String   // 批准文号，必填
+  location    String?  // 存放位置
+  imageUrl    String?  // 药品图片
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // 关联用药记录
+  usageRecords MedicineUsageRecord[]
+  // 关联提醒
+  reminders    Reminder[]
+  
+  @@index([expiryDate])
+  @@index([name])
+}
+
+// 用药提醒表
+model Reminder {
+  id          String   @id @default(cuid())
+  medicineId  String
+  medicine    Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  
+  title       String   // 提醒标题
+  description String?  // 提醒描述
+  reminderTime DateTime // 提醒时间
+  frequency   String   // 频率（每天、每周、每月等）
+  isActive    Boolean  @default(true) // 是否激活
+  isCompleted Boolean  @default(false) // 是否已完成
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([medicineId])
+  @@index([reminderTime])
+}
+
+// 用药记录表
+model MedicineUsageRecord {
+  id          String   @id @default(cuid())
+  medicineId  String
+  medicine    Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  
+  dosage      String   // 服用剂量
+  usageTime   DateTime // 服用时间
+  notes       String?  // 备注
+  sideEffectNotes String? // 副作用记录
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([medicineId])
+  @@index([usageTime])
+}
+
+// 用户表
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  referenceRanges VitalSignReferenceRange[]
+}
+
+// 生命体征记录表
+model VitalSign {
+  id            String   @id @default(cuid())
+  type          String   // 体征类型（如：体温、血压等）
+  value         Float    // 数值
+  unit          String   // 单位
+  measureTime   DateTime // 测量时间
+  notes         String?  // 备注
+  isNormal      Boolean  @default(true) // 是否正常范围
+  referenceRange String? // 参考范围
+  
+  category      String?  // 分类（如空腹、餐后等）
+  systolic      Int?     // 收缩压（用于血压）
+  diastolic     Int?     // 舒张压（用于血压）
+  glucoseContext String? // 血糖上下文（如空腹、餐后等）
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([type])
+  @@index([measureTime])
+  @@index([category])
+}
+
+// 生命体征提醒表
+model VitalSignReminder {
+  id            String   @id @default(cuid())
+  title         String   // 提醒标题
+  description   String?  // 提醒描述
+  vitalSignType String   // 体征类型
+  reminderTime  DateTime // 提醒时间
+  frequency     String   // 频率：once(一次性), daily(每天), weekly(每周), monthly(每月)
+  isActive      Boolean  @default(true) // 是否激活
+  isCompleted   Boolean  @default(false) // 是否已完成
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([vitalSignType])
+  @@index([reminderTime])
+}
+
+// 生命体征参考范围表
+model VitalSignReferenceRange {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type         String   // 体征类型
+  minValue     Float    // 最小值
+  maxValue     Float    // 最大值
+  unit         String   // 单位
+  description  String?  // 描述
+  isSystem     Boolean  @default(false) // 是否系统默认
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([type])
+  @@index([userId])
+}
