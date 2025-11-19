@@ -90,6 +90,8 @@ export interface VitalSign {
   notes?: string             // 备注说明
   isNormal: boolean          // 是否正常范围内
   referenceRange?: string    // 参考范围
+  systolic?: number          // 收缩压
+  diastolic?: number         // 舒张压
   createdAt: Date | string
   updatedAt: Date | string
 }
@@ -104,6 +106,20 @@ export interface VitalSignReminder {
   frequency: string         // 频率：once(一次性), daily(每天), weekly(每周), monthly(每月)
   isActive: boolean         // 是否激活
   isCompleted: boolean      // 是否已完成
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
+// 生命体征参考范围类型
+export interface VitalSignReferenceRange {
+  id: string
+  userId?: string
+  type: string
+  minValue: number
+  maxValue: number
+  unit: string
+  description?: string
+  isSystem: boolean
   createdAt: Date | string
   updatedAt: Date | string
 }

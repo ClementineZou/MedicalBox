@@ -3,7 +3,7 @@ import prisma from '~/server/utils/prisma'
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    
+
     const vitalSign = await prisma.vitalSign.create({
       data: {
         type: body.type,
@@ -12,10 +12,12 @@ export default defineEventHandler(async (event) => {
         measureTime: new Date(body.measureTime),
         isNormal: body.isNormal,
         referenceRange: body.referenceRange,
-        notes: body.notes
+        notes: body.notes,
+        systolic: body.systolic,
+        diastolic: body.diastolic
       }
     })
-    
+
     return {
       success: true,
       data: vitalSign,

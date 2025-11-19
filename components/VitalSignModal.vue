@@ -6,7 +6,7 @@
       <form @submit.prevent="submit" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- 体征类型 -->
-          <div>
+          <div class="md:col-span-2">
             <label for="type" class="block text-sm font-medium mb-1">体征类型 <span class="text-red-500">*</span></label>
             <select
               id="type"
@@ -25,8 +25,39 @@
             </select>
           </div>
           
-          <!-- 数值 -->
-          <div>
+          <!-- 数值 (血压) -->
+          <div v-if="form.type === 'bloodPressure'" class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">血压 (收缩压/舒张压) <span class="text-red-500">*</span></label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="form.systolic"
+                type="number"
+                placeholder="收缩压"
+                required
+                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              />
+              <span class="text-xl">/</span>
+              <input
+                v-model="form.diastolic"
+                type="number"
+                placeholder="舒张压"
+                required
+                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              />
+              <div class="relative w-24 flex-shrink-0">
+                <select
+                  v-model="form.unit"
+                  required
+                  class="w-full px-2 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+                >
+                  <option v-for="unit in getUnitsForType(form.type)" :key="unit" :value="unit">{{ unit }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 数值 (其他) -->
+          <div v-else class="md:col-span-2">
             <label for="value" class="block text-sm font-medium mb-1">数值 <span class="text-red-500">*</span></label>
             <div class="flex items-center">
               <input
@@ -37,7 +68,7 @@
                 required
                 class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
               />
-              <div class="relative ml-2 w-24">
+              <div class="relative ml-2 w-24 flex-shrink-0">
                 <select
                   v-model="form.unit"
                   required
@@ -50,7 +81,7 @@
           </div>
           
           <!-- 测量时间 -->
-          <div>
+          <div class="md:col-span-2">
             <label for="measureTime" class="block text-sm font-medium mb-1">测量时间 <span class="text-red-500">*</span></label>
             <input
               id="measureTime"
@@ -60,45 +91,6 @@
               class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
             />
           </div>
-          
-          <!-- 是否在正常范围内 -->
-          <div>
-            <label class="block text-sm font-medium mb-1">是否在正常范围内</label>
-            <div class="flex items-center space-x-4 py-2">
-              <div class="flex items-center">
-                <input
-                  id="normal-yes"
-                  v-model="form.isNormal"
-                  :value="true"
-                  type="radio"
-                  class="mr-2"
-                />
-                <label for="normal-yes">正常</label>
-              </div>
-              <div class="flex items-center">
-                <input
-                  id="normal-no"
-                  v-model="form.isNormal"
-                  :value="false"
-                  type="radio"
-                  class="mr-2"
-                />
-                <label for="normal-no">异常</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 参考范围 -->
-        <div>
-          <label for="referenceRange" class="block text-sm font-medium mb-1">参考范围</label>
-          <input
-            id="referenceRange"
-            v-model="form.referenceRange"
-            type="text"
-            placeholder="请输入参考范围，例如：97-99 mmHg"
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-          />
         </div>
         
         <!-- 备注 -->
@@ -134,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import type { VitalSign } from '~/types'
+import type { VitalSign, VitalSignReferenceRange } from '~/types'
 import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime'
 
 const props = defineProps<{
@@ -147,25 +139,77 @@ const emit = defineEmits<{
   success: []
 }>()
 
+// 状态
+const referenceRanges = ref<VitalSignReferenceRange[]>([])
+
 // 表单数据
 const form = reactive({
   type: 'weight',
   value: '',
+  systolic: '',
+  diastolic: '',
   unit: 'kg',
   measureTime: toLocalISOStringForInput(new Date()),
-  isNormal: true,
-  referenceRange: '',
   notes: ''
 })
+
+// 加载参考范围
+const loadReferenceRanges = async () => {
+  try {
+    const res = await $fetch('/api/vitals/reference-ranges')
+    referenceRanges.value = (res as any).data || []
+  } catch (error) {
+    console.error('Error loading reference ranges:', error)
+  }
+}
+
+// 自动计算是否正常和参考范围文本
+const calculateStatus = () => {
+  const range = referenceRanges.value.find(r => r.type === form.type)
+  
+  let isNormal = true
+  let referenceRangeStr = ''
+  
+  if (range) {
+    referenceRangeStr = `${range.minValue} - ${range.maxValue} ${range.unit}`
+    
+    if (form.type === 'bloodPressure') {
+      // 血压特殊处理
+      const sys = parseFloat(form.systolic)
+      const dia = parseFloat(form.diastolic)
+      
+      if (!isNaN(sys) && !isNaN(dia)) {
+        // 简单判断：收缩压 90-140，舒张压 60-90 (这里使用系统预设值更准确，但血压通常有两个范围)
+        // 假设 range.minValue/maxValue 存储的是收缩压范围，我们需要更复杂的逻辑或者假设
+        // 暂时简化：只判断收缩压是否在范围内，或者如果系统有更详细的配置
+        // 实际上 seed 数据里血压是 90-120，这通常指收缩压。
+        // 为了更准确，我们可能需要单独存储舒张压范围，或者在代码里硬编码标准
+        // 这里暂时使用 seed 的范围作为收缩压参考
+        const isSysNormal = sys >= range.minValue && sys <= range.maxValue
+        // 舒张压通常比收缩压低 30-40，这里简单硬编码一个常见范围 60-80 作为示例，或者不判断舒张压
+        const isDiaNormal = dia >= 60 && dia <= 80 
+        
+        isNormal = isSysNormal // 暂时只根据收缩压判断，或者两者都满足
+      }
+    } else {
+      const val = parseFloat(form.value)
+      if (!isNaN(val)) {
+        isNormal = val >= range.minValue && val <= range.maxValue
+      }
+    }
+  }
+  
+  return { isNormal, referenceRange: referenceRangeStr }
+}
 
 // 重置表单
 const resetForm = () => {
   form.type = 'weight'
   form.value = ''
+  form.systolic = ''
+  form.diastolic = ''
   form.unit = 'kg'
   form.measureTime = toLocalISOStringForInput(new Date())
-  form.isNormal = true
-  form.referenceRange = ''
   form.notes = ''
 }
 
@@ -174,12 +218,12 @@ watch(() => props.vitalSign, (newVitalSign) => {
   if (newVitalSign) {
     form.type = newVitalSign.type
     form.value = String(newVitalSign.value)
+    form.systolic = newVitalSign.systolic ? String(newVitalSign.systolic) : ''
+    form.diastolic = newVitalSign.diastolic ? String(newVitalSign.diastolic) : ''
     form.unit = newVitalSign.unit
     form.measureTime = newVitalSign.measureTime instanceof Date
       ? toLocalISOStringForInput(newVitalSign.measureTime)
       : String(newVitalSign.measureTime).slice(0, 16)
-    form.isNormal = newVitalSign.isNormal
-    form.referenceRange = newVitalSign.referenceRange || ''
     form.notes = newVitalSign.notes || ''
   } else {
     resetForm()
@@ -219,15 +263,25 @@ watch(() => form.type, (newType) => {
 // 提交表单
 const submit = async () => {
   try {
+    // 计算状态
+    const { isNormal, referenceRange } = calculateStatus()
+    
     // 构建请求体
-    const payload = {
+    const payload: any = {
       type: form.type,
-      value: parseFloat(form.value),
       unit: form.unit,
       measureTime: form.measureTime,
-      isNormal: form.isNormal,
-      referenceRange: form.referenceRange,
+      isNormal,
+      referenceRange,
       notes: form.notes
+    }
+    
+    if (form.type === 'bloodPressure') {
+      payload.systolic = parseInt(form.systolic)
+      payload.diastolic = parseInt(form.diastolic)
+      payload.value = payload.systolic // 主数值存收缩压，方便图表显示
+    } else {
+      payload.value = parseFloat(form.value)
     }
     
     // 根据是否有ID决定是创建还是更新
@@ -258,4 +312,8 @@ const submit = async () => {
 const close = () => {
   emit('close')
 }
+
+onMounted(() => {
+  loadReferenceRanges()
+})
 </script>

@@ -4,14 +4,14 @@ export default defineEventHandler(async (event) => {
   try {
     const id = getRouterParam(event, 'id')
     const body = await readBody(event)
-    
+
     if (!id) {
       return {
         success: false,
         error: '缺少ID参数'
       }
     }
-    
+
     // 更新记录
     const vitalSign = await prisma.vitalSign.update({
       where: { id },
@@ -22,10 +22,12 @@ export default defineEventHandler(async (event) => {
         measureTime: new Date(body.measureTime),
         isNormal: body.isNormal,
         referenceRange: body.referenceRange,
-        notes: body.notes
+        notes: body.notes,
+        systolic: body.systolic,
+        diastolic: body.diastolic
       }
     })
-    
+
     return {
       success: true,
       data: vitalSign,

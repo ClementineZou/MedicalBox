@@ -70,13 +70,27 @@
       <p>加载中...</p>
     </div>
 
-    <div v-else-if="vitalsData.length === 0" class="bg-white rounded-md-lg shadow-md p-16 text-center">
+    <!-- 图表展示 (Always show if type selected) -->
+    <div v-if="!loading && filters.type" class="bg-white rounded-md-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">趋势分析</h2>
+      <VitalSignChart 
+        :data="filteredVitalsData" 
+        :reference-range="selectedReferenceRange"
+        :type="filters.type"
+      />
+      <div v-if="selectedReferenceRange" class="mt-4 text-sm text-md-on-surface-variant">
+        <p>正常参考范围: {{ selectedReferenceRange.minValue }} - {{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}</p>
+        <p v-if="selectedReferenceRange.description">{{ selectedReferenceRange.description }}</p>
+      </div>
+    </div>
+
+    <div v-if="!loading && vitalsData.length === 0" class="bg-white rounded-md-lg shadow-md p-16 text-center">
       <div class="text-6xl mb-4">📊</div>
       <p class="text-xl mb-2">暂无健康监测数据</p>
       <p class="text-md-on-surface-variant">点击"添加监测记录"按钮开始记录您的健康数据</p>
     </div>
 
-    <div v-else class="bg-white rounded-md-lg shadow-md p-6">
+    <div v-else-if="!loading" class="bg-white rounded-md-lg shadow-md p-6">
       <h2 class="text-xl font-semibold mb-4">监测记录</h2>
       
       <!-- 数据表格 -->
@@ -95,7 +109,14 @@
           <tbody>
             <tr v-for="vitalSign in vitalsData" :key="vitalSign.id" class="border-b border-md-surface-variant">
               <td class="py-4 px-4">{{ getVitalSignTypeName(vitalSign.type) }}</td>
-              <td class="py-4 px-4">{{ vitalSign.value }} {{ vitalSign.unit }}</td>
+              <td class="py-4 px-4">
+                <span v-if="vitalSign.type === 'bloodPressure' && vitalSign.systolic && vitalSign.diastolic">
+                  {{ vitalSign.systolic }}/{{ vitalSign.diastolic }} {{ vitalSign.unit }}
+                </span>
+                <span v-else>
+                  {{ vitalSign.value }} {{ vitalSign.unit }}
+                </span>
+              </td>
               <td class="py-4 px-4">{{ $formatDateTime(vitalSign.measureTime) }}</td>
               <td class="py-4 px-4">
                 <span :class="[
@@ -201,7 +222,7 @@
 </template>
 
 <script setup lang="ts">
-import type { VitalSign, VitalSignReminder } from '~/types'
+import type { VitalSign, VitalSignReminder, VitalSignReferenceRange } from '~/types'
 
 useHead({
   title: '健康监测'
@@ -211,6 +232,7 @@ useHead({
 const loading = ref(true)
 const vitalsData = ref<VitalSign[]>([])
 const remindersData = ref<VitalSignReminder[]>([])
+const referenceRanges = ref<VitalSignReferenceRange[]>([])
 const isModalOpen = ref(false)
 const isReminderModalOpen = ref(false)
 const selectedVitalSign = ref<VitalSign | null>(null)
@@ -221,6 +243,18 @@ const filters = reactive({
   type: '',
   dateFrom: '',
   dateTo: ''
+})
+
+// 计算当前选中的参考范围
+const selectedReferenceRange = computed(() => {
+  if (!filters.type) return undefined
+  return referenceRanges.value.find((r: VitalSignReferenceRange) => r.type === filters.type)
+})
+
+// 过滤后的体征数据，用于图表显示，防止显示其他类型的数据
+const filteredVitalsData = computed(() => {
+  if (!filters.type) return []
+  return vitalsData.value.filter(v => v.type === filters.type)
 })
 
 // 获取体征类型名称
@@ -260,13 +294,15 @@ const loadData = async () => {
     if (filters.dateTo) query.dateTo = filters.dateTo
     
     // 请求数据
-    const [vitalsRes, remindersRes] = await Promise.all([
+    const [vitalsRes, remindersRes, rangesRes] = await Promise.all([
       $fetch('/api/vitals', { query }),
-      $fetch('/api/vitals/reminders')
+      $fetch('/api/vitals/reminders'),
+      $fetch('/api/vitals/reference-ranges')
     ])
     
     vitalsData.value = (vitalsRes as any).data || []
     remindersData.value = (remindersRes as any).data || []
+    referenceRanges.value = (rangesRes as any).data || []
   } catch (error) {
     console.error('Error loading vital signs data:', error)
     const { error: showError } = useNotification()
