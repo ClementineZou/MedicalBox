@@ -38,7 +38,8 @@ export default defineNuxtConfig({
 
     // Public keys (exposed to client)
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
+      githubClientId: process.env.GITHUB_CLIENT_ID
     }
   }
 })

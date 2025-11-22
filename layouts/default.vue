@@ -28,7 +28,16 @@
               <!-- User Menu -->
               <div class="relative" @click="showUserMenu = !showUserMenu">
                 <button class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                  <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-sm font-medium">
+                  <img 
+                    v-if="gravatarUrl"
+                    :src="gravatarUrl" 
+                    :alt="user?.name || 'User avatar'"
+                    class="w-8 h-8 rounded-full object-cover border border-white border-opacity-20"
+                  />
+                  <div 
+                    v-else
+                    class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-sm font-medium"
+                  >
                     {{ userInitial }}
                   </div>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,12 +67,7 @@
               </div>
             </template>
             <template v-else>
-              <NuxtLink to="/login" class="hover:opacity-80 transition-opacity">
-                登录
-              </NuxtLink>
-              <NuxtLink to="/register" class="bg-white bg-opacity-20 px-4 py-2 rounded-md hover:bg-opacity-30 transition">
-                注册
-              </NuxtLink>
+              <!-- 未登录时不再显示顶部登录/注册按钮，根据需求仅保留首页入口 -->
             </template>
           </div>
         </nav>
@@ -87,6 +91,10 @@
 <script setup lang="ts">
 const { user, isAuthenticated, logout } = useAuth()
 const showUserMenu = ref(false)
+
+// Gravatar support
+const userEmail = computed(() => user.value?.email)
+const { gravatarUrl } = useGravatar(userEmail, 80)
 
 const userInitial = computed(() => {
   if (user.value?.name) {

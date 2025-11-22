@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="bg-md-primary-container rounded-md-lg p-8 text-center">
       <div v-if="isAuthenticated" class="mb-4">
-        <p class="text-sm text-md-on-primary-container opacity-80">
+        <p class="text-xl font-semibold text-md-on-primary-container opacity-90">
           你好，{{ user?.name || user?.email }}
         </p>
       </div>
@@ -51,7 +51,7 @@
 
     <!-- Features Section -->
     <section class="grid md:grid-cols-4 gap-6">
-      <div class="bg-white rounded-md-lg shadow-md p-6">
+      <div class="bg-white rounded-md-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
         <div class="text-4xl mb-4">💊</div>
         <h3 class="text-xl font-semibold mb-2">药品管理</h3>
         <p class="text-md-on-surface-variant">
@@ -59,7 +59,7 @@
         </p>
       </div>
       
-      <div class="bg-white rounded-md-lg shadow-md p-6">
+      <div class="bg-white rounded-md-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
         <div class="text-4xl mb-4">⏰</div>
         <h3 class="text-xl font-semibold mb-2">用药提醒</h3>
         <p class="text-md-on-surface-variant">
@@ -67,7 +67,7 @@
         </p>
       </div>
       
-      <div class="bg-white rounded-md-lg shadow-md p-6">
+      <div class="bg-white rounded-md-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
         <div class="text-4xl mb-4">📊</div>
         <h3 class="text-xl font-semibold mb-2">用药记录</h3>
         <p class="text-md-on-surface-variant">
@@ -75,7 +75,7 @@
         </p>
       </div>
       
-      <div class="bg-white rounded-md-lg shadow-md p-6">
+      <div class="bg-white rounded-md-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
         <div class="text-4xl mb-4">📈</div>
         <h3 class="text-xl font-semibold mb-2">健康监测</h3>
         <p class="text-md-on-surface-variant">

@@ -14,7 +14,16 @@
         <div class="space-y-6">
           <!-- Avatar -->
           <div class="flex items-center space-x-4">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
+            <img 
+              v-if="gravatarUrl"
+              :src="gravatarUrl" 
+              :alt="user?.name || 'User avatar'"
+              class="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+            />
+            <div 
+              v-else
+              class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold"
+            >
               {{ userInitial }}
             </div>
             <div>
@@ -138,27 +147,21 @@
                 <p class="text-sm text-gray-600">关联你的GitHub账户</p>
               </div>
             </div>
-            <button class="text-blue-600 hover:text-blue-700 font-medium text-sm">
+            <button 
+              v-if="!isGithubLinked"
+              @click="handleConnectGithub"
+              class="text-blue-600 hover:text-blue-700 font-medium text-sm"
+            >
               关联
             </button>
+            <span v-else class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              已关联
+            </span>
           </div>
         </div>
-      </div>
-
-      <!-- Data Export Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">数据导出</h2>
-        
-        <p class="text-gray-600 mb-4">
-          导出你的所有数据，包括药品信息、用药记录、生命体征等。
-        </p>
-        
-        <button
-          @click="handleExportData"
-          class="bg-indigo-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
-        >
-          导出数据
-        </button>
       </div>
 
       <!-- Danger Zone Card -->
@@ -209,6 +212,8 @@
 </template>
 
 <script setup lang="ts">
+import { authClient } from "~/lib/auth-client";
+
 const { user, logout } = useAuth();
 const router = useRouter();
 
@@ -219,6 +224,12 @@ const passwordLoading = ref(false);
 const passwordSuccess = ref("");
 const passwordError = ref("");
 const showDeleteConfirm = ref(false);
+const linkedAccounts = ref<any[]>([]);
+const accountsLoading = ref(true);
+
+// Gravatar support
+const userEmail = computed(() => user.value?.email);
+const { gravatarUrl } = useGravatar(userEmail, 200);
 
 // Computed
 const userInitial = computed(() => {
@@ -269,12 +280,45 @@ const handleChangePassword = async () => {
   }
 };
 
-const handleExportData = async () => {
+const loadLinkedAccounts = async () => {
+  accountsLoading.value = true;
   try {
-    // TODO: Implement data export
-    alert("数据导出功能即将推出");
+    const response = await $fetch('/api/auth/get-session');
+    if (response) {
+      // Fetch user's linked accounts from database
+      const accountsResponse = await $fetch(`/api/user/accounts`);
+      if ((accountsResponse as any).success) {
+        linkedAccounts.value = (accountsResponse as any).data || [];
+      }
+    }
   } catch (e: any) {
-    alert("导出失败: " + e.message);
+    console.error('Failed to load linked accounts:', e);
+  } finally {
+    accountsLoading.value = false;
+  }
+};
+
+const isGithubLinked = computed(() => {
+  return linkedAccounts.value.some(acc => acc.providerId === 'github');
+});
+
+const handleConnectGithub = async () => {
+  try {
+    // Get GitHub client ID from runtime config or env
+    const config = useRuntimeConfig();
+    const clientId = config.public.githubClientId || 'Ov23li6HpGTLgDQAGVq7';
+    const redirectUri = `${window.location.origin}/profile/github-callback`;
+    const state = Math.random().toString(36).substring(7);
+    
+    // Store state in sessionStorage for validation
+    sessionStorage.setItem('github_link_state', state);
+    
+    // Redirect to GitHub OAuth
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=read:user,user:email`;
+    window.location.href = authUrl;
+  } catch (e: any) {
+    console.error("GitHub连接失败:", e);
+    alert("连接GitHub失败: " + e.message);
   }
 };
 
@@ -290,6 +334,11 @@ const handleDeleteAccount = async () => {
     showDeleteConfirm.value = false;
   }
 };
+
+// Load linked accounts on mount
+onMounted(() => {
+  loadLinkedAccounts();
+});
 
 // Redirect if not logged in
 watchEffect(() => {
