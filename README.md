@@ -12,7 +12,7 @@
 
 <p align="center">
   <strong>让用药更安全，让健康更可控</strong><br>
-  <em>Safe Medication, Health in Control.</em>
+  <em>Safe Medication, Health in Control</em>
 </p>
 
 <p align="center">
