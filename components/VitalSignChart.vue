@@ -72,8 +72,17 @@ const chartData = computed(() => {
     })
   } else {
     // Other vital signs
+    const labelMap: Record<string, string> = {
+      height: '身高',
+      weight: '体重',
+      temperature: '体温',
+      heartRate: '心率',
+      bloodOxygen: '血氧',
+      bloodGlucose: '血糖'
+    }
+
     datasets.push({
-      label: props.referenceRange?.description || '数值',
+      label: labelMap[props.type] || props.referenceRange?.description || '数值',
       backgroundColor: '#0ea5e9',
       borderColor: '#0ea5e9',
       data: values,

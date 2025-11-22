@@ -21,7 +21,6 @@
               <option value="bloodOxygen">血氧</option>
               <option value="bloodGlucose">血糖</option>
               <option value="heartRate">心率</option>
-              <option value="other">其他</option>
             </select>
           </div>
           

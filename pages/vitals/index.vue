@@ -35,7 +35,6 @@
             <option value="bloodOxygen">血氧</option>
             <option value="bloodGlucose">血糖</option>
             <option value="heartRate">心率</option>
-            <option value="other">其他</option>
           </select>
         </div>
         <div>
@@ -79,8 +78,13 @@
         :type="filters.type"
       />
       <div v-if="selectedReferenceRange" class="mt-4 text-sm text-md-on-surface-variant">
-        <p>正常参考范围: {{ selectedReferenceRange.minValue }} - {{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}</p>
-        <p v-if="selectedReferenceRange.description">{{ selectedReferenceRange.description }}</p>
+        <template v-if="filters.type === 'bloodPressure'">
+          <p>收缩压参考范围：{{ selectedReferenceRange.minValue || 90 }} - {{ selectedReferenceRange.maxValue || 120 }} {{ selectedReferenceRange.unit }}</p>
+          <p>舒张压参考范围：60 - 80 {{ selectedReferenceRange.unit }}</p>
+        </template>
+        <template v-else>
+          <p>{{ getReferenceLabel(filters.type) }}：{{ selectedReferenceRange.minValue }} - {{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}</p>
+        </template>
       </div>
     </div>
 
@@ -266,10 +270,23 @@ const getVitalSignTypeName = (type: string): string => {
     'bloodPressure': '血压',
     'bloodOxygen': '血氧',
     'bloodGlucose': '血糖',
-    'heartRate': '心率',
-    'other': '其他'
+    'heartRate': '心率'
   }
   return typeMap[type] || type
+}
+
+// 获取参考范围标签
+const getReferenceLabel = (type: string): string => {
+  const labelMap: Record<string, string> = {
+    'height': '身高参考范围',
+    'weight': '体重参考范围',
+    'temperature': '体温参考范围',
+    'bloodPressure': '血压参考范围',
+    'bloodOxygen': '血氧参考范围',
+    'bloodGlucose': '空腹血糖参考范围',
+    'heartRate': '静息心率参考范围'
+  }
+  return labelMap[type] || '正常参考范围'
 }
 
 // 获取频率文本
