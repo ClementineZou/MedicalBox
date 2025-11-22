@@ -2,17 +2,18 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
     try {
+        const userId = await requireUserId(event)
         const query = getQuery(event)
         const type = query.type as string
 
-        const where: any = {}
+        const where: any = {
+            userId // Filter by authenticated user
+        }
 
         if (type) {
             where.type = type
         }
 
-        // Fetch system defaults and user-specific ranges (if we had user context, but for now just all relevant ones)
-        // In a real app, we might filter by userId or isSystem: true
         const ranges = await prisma.vitalSignReferenceRange.findMany({
             where,
             orderBy: {

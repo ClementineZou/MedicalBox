@@ -2,6 +2,7 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
     if (!id) {
       return {
@@ -11,10 +12,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const body = await readBody(event)
-    
-    // 检查记录是否存在
-    const existingRecord = await prisma.medicineUsageRecord.findUnique({
-      where: { id },
+
+    // 检查记录是否存在且属于当前用户
+    const existingRecord = await prisma.medicineUsageRecord.findFirst({
+      where: { id, userId },
       include: { medicine: true }
     })
 
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
         error: 'Record not found'
       }
     }
-    
+
     // 从原剂量字符串中提取数值
     let oldUsageAmount = 0
     if (existingRecord.dosage) {
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
         oldUsageAmount = parseFloat(match[1])
       }
     }
-    
+
     // 从新剂量字符串中提取数值
     let newUsageAmount = 0
     if (body.dosage) {
@@ -52,35 +53,35 @@ export default defineEventHandler(async (event) => {
           where: { id: existingRecord.medicineId },
           data: { quantity: { increment: oldUsageAmount } }
         })
-        
-        // 减少新药品的库存
-        const newMedicine = await prisma.medicine.findUnique({
-          where: { id: body.medicineId }
+
+        // 减少新药品的库存 (确保属于当前用户)
+        const newMedicine = await prisma.medicine.findFirst({
+          where: { id: body.medicineId, userId }
         })
-        
+
         if (newMedicine) {
           let newQuantity = newMedicine.quantity - newUsageAmount
           if (newQuantity < 0) newQuantity = 0
-          
+
           await prisma.medicine.update({
             where: { id: body.medicineId },
             data: { quantity: newQuantity }
           })
         }
-      } 
+      }
       // 如果只是剂量改变但药品相同
       else {
         // 调整库存差值
-        const medicine = await prisma.medicine.findUnique({
-          where: { id: body.medicineId }
+        const medicine = await prisma.medicine.findFirst({
+          where: { id: body.medicineId, userId }
         })
-        
+
         if (medicine) {
           // 计算差值，正值表示减少的用量，负值表示增加的用量
           const diff = oldUsageAmount - newUsageAmount
           let newQuantity = medicine.quantity + diff
           if (newQuantity < 0) newQuantity = 0
-          
+
           await prisma.medicine.update({
             where: { id: body.medicineId },
             data: { quantity: newQuantity }

@@ -2,19 +2,22 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const query = getQuery(event)
     const type = query.type as string
     const dateFrom = query.dateFrom as string
     const dateTo = query.dateTo as string
-    
+
     // 构建查询条件
-    const where: any = {}
-    
+    const where: any = {
+      userId // Filter by authenticated user
+    }
+
     // 类型过滤
     if (type) {
       where.type = type
     }
-    
+
     // 日期范围过滤
     if (dateFrom || dateTo) {
       where.measureTime = {}
@@ -28,7 +31,7 @@ export default defineEventHandler(async (event) => {
         where.measureTime.lte = endDate
       }
     }
-    
+
     // 查询数据
     const vitals = await prisma.vitalSign.findMany({
       where,
@@ -36,7 +39,7 @@ export default defineEventHandler(async (event) => {
         measureTime: 'desc'
       }
     })
-    
+
     return {
       success: true,
       data: vitals

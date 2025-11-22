@@ -2,15 +2,20 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
+
     // 获取药品总数
-    const totalMedicines = await prisma.medicine.count()
+    const totalMedicines = await prisma.medicine.count({
+      where: { userId }
+    })
 
     // 获取即将过期的药品数（30天内）
     const thirtyDaysLater = new Date()
     thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30)
-    
+
     const expiringMedicines = await prisma.medicine.count({
       where: {
+        userId,
         expiryDate: {
           lte: thirtyDaysLater,
           gte: new Date()
@@ -26,6 +31,7 @@ export default defineEventHandler(async (event) => {
 
     const todayReminders = await prisma.reminder.count({
       where: {
+        userId,
         isActive: true,
         isCompleted: false,
         reminderTime: {
@@ -42,6 +48,7 @@ export default defineEventHandler(async (event) => {
 
     const monthlyRecords = await prisma.medicineUsageRecord.count({
       where: {
+        userId,
         usageTime: {
           gte: firstDayOfMonth
         }
@@ -51,14 +58,17 @@ export default defineEventHandler(async (event) => {
     // 获取健康监测记录数
     let vitalSignsCount = 0
     let vitalSignRemindersCount = 0
-    
+
     try {
       // 如果新模型已经存在，则获取统计数据
-      vitalSignsCount = await prisma.vitalSign.count()
-      
+      vitalSignsCount = await prisma.vitalSign.count({
+        where: { userId }
+      })
+
       // 获取今日健康监测提醒数
       vitalSignRemindersCount = await prisma.vitalSignReminder.count({
         where: {
+          userId,
           isActive: true,
           isCompleted: false,
           reminderTime: {

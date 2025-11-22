@@ -10,9 +10,76 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Better Auth User Models
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  sessions             Session[]
+  accounts             Account[]
+  referenceRanges      VitalSignReferenceRange[]
+  medicines            Medicine[]
+  vitalSigns           VitalSign[]
+  medicineUsageRecords MedicineUsageRecord[]
+  reminders            Reminder[]
+  vitalSignReminders   VitalSignReminder[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  expiresAt         DateTime?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@unique([identifier, value])
+}
+
 // 药物信息表
 model Medicine {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   name        String   // 药品名称
   brand       String   // 品牌/厂家，必填
   category    String?  // 分类（如：感冒药、消炎药等）
@@ -36,6 +103,7 @@ model Medicine {
   // 关联提醒
   reminders    Reminder[]
   
+  @@index([userId])
   @@index([expiryDate])
   @@index([name])
 }
@@ -43,6 +111,8 @@ model Medicine {
 // 用药提醒表
 model Reminder {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   medicineId  String
   medicine    Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
   
@@ -56,6 +126,7 @@ model Reminder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  @@index([userId])
   @@index([medicineId])
   @@index([reminderTime])
 }
@@ -63,6 +134,8 @@ model Reminder {
 // 用药记录表
 model MedicineUsageRecord {
   id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   medicineId  String
   medicine    Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
   
@@ -74,25 +147,17 @@ model MedicineUsageRecord {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  @@index([userId])
   @@index([medicineId])
   @@index([usageTime])
-}
-
-// 用户表
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  referenceRanges VitalSignReferenceRange[]
 }
 
 // 生命体征记录表
 model VitalSign {
   id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   type          String   // 体征类型（如：体温、血压等）
   value         Float    // 数值
   unit          String   // 单位
@@ -109,6 +174,7 @@ model VitalSign {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
+  @@index([userId])
   @@index([type])
   @@index([measureTime])
   @@index([category])
@@ -117,6 +183,9 @@ model VitalSign {
 // 生命体征提醒表
 model VitalSignReminder {
   id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   title         String   // 提醒标题
   description   String?  // 提醒描述
   vitalSignType String   // 体征类型
@@ -128,6 +197,7 @@ model VitalSignReminder {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
+  @@index([userId])
   @@index([vitalSignType])
   @@index([reminderTime])
 }

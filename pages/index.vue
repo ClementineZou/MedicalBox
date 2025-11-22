@@ -2,13 +2,32 @@
   <div class="space-y-8">
     <!-- Hero Section -->
     <section class="bg-md-primary-container rounded-md-lg p-8 text-center">
+      <div v-if="isAuthenticated" class="mb-4">
+        <p class="text-sm text-md-on-primary-container opacity-80">
+          你好，{{ user?.name || user?.email }}
+        </p>
+      </div>
       <h1 class="text-4xl font-bold text-md-on-primary-container mb-4">
         欢迎使用 MedicalBox
       </h1>
       <p class="text-lg text-md-on-primary-container mb-6">
         智能管理您的家庭药箱，及时提醒用药，记录健康历史
       </p>
-      <div class="flex gap-4 justify-center flex-wrap">
+      <div v-if="!isAuthenticated" class="flex gap-4 justify-center flex-wrap mb-6">
+        <NuxtLink 
+          to="/login" 
+          class="bg-md-primary text-md-on-primary px-8 py-3 rounded-md-md hover:opacity-90 transition-opacity font-medium"
+        >
+          登录
+        </NuxtLink>
+        <NuxtLink 
+          to="/register" 
+          class="bg-md-secondary text-md-on-secondary px-8 py-3 rounded-md-md hover:opacity-90 transition-opacity font-medium"
+        >
+          注册
+        </NuxtLink>
+      </div>
+      <div v-else class="flex gap-4 justify-center flex-wrap">
         <NuxtLink 
           to="/medicines" 
           class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
@@ -105,6 +124,8 @@
 useHead({
   title: '首页'
 })
+
+const { user, isAuthenticated } = useAuth()
 
 const loading = ref(true)
 const stats = ref({

@@ -2,8 +2,9 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
-    
+
     if (!id) {
       return {
         success: false,
@@ -11,8 +12,11 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const medicine = await prisma.medicine.findUnique({
-      where: { id },
+    const medicine = await prisma.medicine.findFirst({
+      where: {
+        id,
+        userId // Ensure user owns this medicine
+      },
       include: {
         usageRecords: {
           orderBy: { usageTime: 'desc' },

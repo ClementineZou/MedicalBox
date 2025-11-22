@@ -2,13 +2,18 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    // Require authentication
+    const userId = await requireUserId(event)
+
     const query = getQuery(event)
     const search = query.search as string || ''
     const category = query.category as string || ''
-    
+
     // 构建查询条件
-    const where: any = {}
-    
+    const where: any = {
+      userId, // Only get medicines for this user
+    }
+
     // 如果有搜索关键词，添加名称搜索条件
     if (search) {
       where.OR = [
@@ -16,12 +21,12 @@ export default defineEventHandler(async (event) => {
         { brand: { contains: search } }
       ]
     }
-    
+
     // 如果有分类筛选，添加分类条件
     if (category) {
       where.category = category
     }
-    
+
     const medicines = await prisma.medicine.findMany({
       where,
       orderBy: {

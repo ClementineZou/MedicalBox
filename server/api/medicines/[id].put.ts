@@ -2,9 +2,10 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
     const body = await readBody(event)
-    
+
     if (!id) {
       return {
         success: false,
@@ -15,6 +16,18 @@ export default defineEventHandler(async (event) => {
     if (!body.name || !body.brand || !body.dosage || !body.dosageUnit || !body.quantityUnit || !body.approvalNo) {
       return { success: false, error: '请填写所有必填项' }
     }
+    // First check if medicine exists and belongs to user
+    const existing = await prisma.medicine.findFirst({
+      where: { id, userId }
+    })
+
+    if (!existing) {
+      return {
+        success: false,
+        error: 'Medicine not found'
+      }
+    }
+
     const medicine = await prisma.medicine.update({
       where: { id },
       data: {

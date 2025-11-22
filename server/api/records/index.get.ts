@@ -2,10 +2,13 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const query = getQuery(event)
     const { medicineId, startDate, endDate } = query
 
-    const where: any = {}
+    const where: any = {
+      userId // Filter by authenticated user
+    }
 
     if (medicineId) {
       where.medicineId = medicineId as string

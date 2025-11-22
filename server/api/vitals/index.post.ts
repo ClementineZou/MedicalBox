@@ -2,10 +2,12 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const body = await readBody(event)
 
     const vitalSign = await prisma.vitalSign.create({
       data: {
+        userId, // Associate with authenticated user
         type: body.type,
         value: body.value,
         unit: body.unit,

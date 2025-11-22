@@ -17,6 +17,7 @@
   "dependencies": {
     "@nuxt/ui": "^2.18.0",
     "@prisma/client": "^5.18.0",
+    "better-auth": "^1.4.0",
     "chart.js": "^4.5.1",
     "nuxt": "^3.13.0",
     "vue": "^3.4.0",

@@ -2,6 +2,7 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
     const body = await readBody(event)
 
@@ -9,6 +10,18 @@ export default defineEventHandler(async (event) => {
       return {
         success: false,
         error: '缺少ID参数'
+      }
+    }
+
+    // 检查记录是否存在且属于当前用户
+    const existing = await prisma.vitalSign.findFirst({
+      where: { id, userId }
+    })
+
+    if (!existing) {
+      return {
+        success: false,
+        error: '未找到生命体征记录'
       }
     }
 

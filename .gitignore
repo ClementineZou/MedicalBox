@@ -47,3 +47,9 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# database
+*.db
+*.sqlite
+*.sqlite3
+dev.db

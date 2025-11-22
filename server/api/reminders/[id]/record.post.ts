@@ -2,8 +2,9 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
-    
+
     if (!id) {
       return {
         success: false,
@@ -15,9 +16,9 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const usageTime = body.usageTime ? new Date(body.usageTime) : new Date()
 
-    // 1. 查找提醒信息
-    const reminder = await prisma.reminder.findUnique({
-      where: { id },
+    // 1. 查找提醒信息并验证所有权
+    const reminder = await prisma.reminder.findFirst({
+      where: { id, userId },
       include: { medicine: true }
     })
 
@@ -43,10 +44,10 @@ export default defineEventHandler(async (event) => {
     } catch (e) {
       console.warn('Failed to parse reminder description:', e)
     }
-    
+
     // 构建剂量字符串，包含剂量值和单位
     let dosage = `${dosageAmount}单位`
-    
+
     // 查询完整的药品信息，以获取 quantityUnit
     if (reminder.medicineId) {
       const medicine = await prisma.medicine.findUnique({
@@ -63,6 +64,7 @@ export default defineEventHandler(async (event) => {
     // 2. 创建用药记录
     const record = await prisma.medicineUsageRecord.create({
       data: {
+        userId, // Associate with authenticated user
         medicineId: reminder.medicineId,
         dosage: dosage,
         usageTime: usageTime,
@@ -77,8 +79,8 @@ export default defineEventHandler(async (event) => {
     // 3. 更新提醒为已完成
     await prisma.reminder.update({
       where: { id },
-      data: { 
-        isCompleted: true 
+      data: {
+        isCompleted: true
       }
     })
 

@@ -2,12 +2,25 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const id = getRouterParam(event, 'id')
-    
+
     if (!id) {
       return {
         success: false,
         error: 'Medicine ID is required'
+      }
+    }
+
+    // First check if medicine exists and belongs to user
+    const existing = await prisma.medicine.findFirst({
+      where: { id, userId }
+    })
+
+    if (!existing) {
+      return {
+        success: false,
+        error: 'Medicine not found'
       }
     }
 

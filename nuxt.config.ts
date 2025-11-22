@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
-  
+
   modules: [
     '@nuxtjs/tailwindcss'
   ],
@@ -31,7 +31,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (server-only)
     databaseUrl: process.env.DATABASE_URL,
-    
+    betterAuthSecret: process.env.BETTER_AUTH_SECRET,
+    betterAuthUrl: process.env.BETTER_AUTH_URL,
+    githubClientId: process.env.GITHUB_CLIENT_ID,
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+
     // Public keys (exposed to client)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api'

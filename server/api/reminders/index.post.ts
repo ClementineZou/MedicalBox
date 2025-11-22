@@ -2,10 +2,12 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const body = await readBody(event)
-    
+
     const reminder = await prisma.reminder.create({
       data: {
+        userId, // Associate with authenticated user
         medicineId: body.medicineId,
         title: body.title,
         description: body.description,

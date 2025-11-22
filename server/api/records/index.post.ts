@@ -2,17 +2,21 @@ import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
+    const userId = await requireUserId(event)
     const body = await readBody(event)
-    
-    // 获取药品信息
-    const medicine = await prisma.medicine.findUnique({
-      where: { id: body.medicineId }
+
+    // 获取药品信息并验证所有权
+    const medicine = await prisma.medicine.findFirst({
+      where: {
+        id: body.medicineId,
+        userId // Ensure user owns the medicine
+      }
     })
-    
+
     if (!medicine) {
       throw new Error('药品不存在')
     }
-    
+
     // 从剂量字符串中提取数值
     let usageAmount = 0
     if (body.dosage) {
@@ -21,20 +25,21 @@ export default defineEventHandler(async (event) => {
         usageAmount = parseFloat(match[1])
       }
     }
-    
+
     // 减少药品库存
     let newQuantity = medicine.quantity - usageAmount
     if (newQuantity < 0) newQuantity = 0
-    
+
     // 更新药品库存
     await prisma.medicine.update({
       where: { id: body.medicineId },
       data: { quantity: newQuantity }
     })
-    
+
     // 创建用药记录
     const record = await prisma.medicineUsageRecord.create({
       data: {
+        userId, // Associate with authenticated user
         medicineId: body.medicineId,
         dosage: body.dosage,
         usageTime: new Date(body.usageTime),
@@ -51,8 +56,8 @@ export default defineEventHandler(async (event) => {
       try {
         await prisma.reminder.update({
           where: { id: body.reminderId },
-          data: { 
-            isCompleted: true 
+          data: {
+            isCompleted: true
           }
         })
       } catch (reminderError) {
