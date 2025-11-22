@@ -2,7 +2,15 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">用药记录</h1>
-      <div>
+      <div class="flex gap-3">
+        <button 
+          v-if="records.length > 0"
+          @click="exportToPDF"
+          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex items-center gap-2"
+        >
+          <span>📄</span>
+          导出PDF
+        </button>
         <button 
           @click="openAddModal"
           class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
@@ -188,7 +196,23 @@ const deleteRecord = async (id: string) => {
   }
 }
 
-// 导出相关功能已移除
+// 导出PDF功能
+const exportToPDF = async () => {
+  const { exportMedicineRecordsToPDF } = await import('~/utils/pdfExport')
+  const { success, error: showError } = useNotification()
+  
+  try {
+    await exportMedicineRecordsToPDF(records.value, {
+      medicineId: filters.value.medicineId || undefined,
+      dateFrom: filters.value.startDate || undefined,
+      dateTo: filters.value.endDate || undefined
+    })
+    success('PDF导出成功')
+  } catch (error) {
+    console.error('Error exporting PDF:', error)
+    showError('PDF导出失败，请重试')
+  }
+}
 
 // 使用全局注入的格式化函数
 const { $formatDateTime } = useNuxtApp()

@@ -4,6 +4,14 @@
       <h1 class="text-3xl font-bold">健康监测</h1>
       <div class="flex flex-col sm:flex-row gap-3">
         <button 
+          v-if="filteredVitalsData.length > 0"
+          @click="exportToPDF"
+          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex items-center gap-2"
+        >
+          <span>📄</span>
+          导出PDF
+        </button>
+        <button 
           @click="openAddModal"
           class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
@@ -70,7 +78,7 @@
     </div>
 
     <!-- 图表展示 (Always show if type selected) -->
-    <div v-if="!loading && filters.type" class="bg-white rounded-md-lg shadow-md p-6">
+    <div v-if="!loading && filters.type" ref="chartContainer" class="bg-white rounded-md-lg shadow-md p-6">
       <h2 class="text-xl font-semibold mb-4">趋势分析</h2>
       <VitalSignChart 
         :data="filteredVitalsData" 
@@ -263,6 +271,7 @@ const isModalOpen = ref(false)
 const isReminderModalOpen = ref(false)
 const selectedVitalSign = ref<VitalSign | null>(null)
 const selectedReminder = ref<VitalSignReminder | null>(null)
+const chartContainer = ref<HTMLElement | null>(null)
 
 // 过滤器
 const filters = reactive({
@@ -465,6 +474,28 @@ const deleteReminder = async (id: string) => {
 // 处理操作成功
 const handleSuccess = () => {
   loadData()
+}
+
+// 导出PDF功能
+const exportToPDF = async () => {
+  const { exportVitalSignsToPDF } = await import('~/utils/pdfExport')
+  const { success, error: showError } = useNotification()
+  
+  try {
+    await exportVitalSignsToPDF(
+      filteredVitalsData.value,
+      {
+        type: filters.type || undefined,
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined
+      },
+      chartContainer.value
+    )
+    success('PDF导出成功')
+  } catch (error) {
+    console.error('Error exporting PDF:', error)
+    showError('PDF导出失败，请重试')
+  }
 }
 
 // 监听体征类型变化,自动刷新数据
