@@ -6,10 +6,9 @@
         <button 
           v-if="filteredVitalsData.length > 0"
           @click="exportToPDF"
-          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex items-center gap-2"
+          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
-          <span>📄</span>
-          导出PDF
+          ↓ 导出PDF
         </button>
         <button 
           @click="openAddModal"
@@ -89,7 +88,7 @@
 
     <div v-if="!loading && vitalsData.length === 0" class="bg-white rounded-md-lg shadow-md p-16 text-center">
       <div class="text-6xl mb-4">📊</div>
-      <p class="text-lg font-semibold mb-2">暂无健康监测数据</p>
+      <p class="text-lg font-semibold mb-2">暂无监测数据</p>
       <p class="text-sm text-md-on-surface-variant">点击“添加监测记录”按钮开始记录您的健康数据</p>
     </div>
 

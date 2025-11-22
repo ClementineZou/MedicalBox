@@ -2,7 +2,14 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">药品管理</h1>
-      <div>
+      <div class="flex gap-3">
+        <button 
+          v-if="medicines.length > 0"
+          @click="exportToPDF"
+          class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+        >
+          ↓ 导出PDF
+        </button>
         <button 
           @click="openAddModal"
           class="bg-md-primary text-md-on-primary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
@@ -216,7 +223,22 @@ const deleteMedicine = async (id: string) => {
   }
 }
 
-// 导出相关功能已移除
+// 导出PDF功能
+const exportToPDF = async () => {
+  const { exportMedicinesToPDF } = await import('~/utils/pdfExport')
+  const { success, error: showError } = useNotification()
+  
+  try {
+    await exportMedicinesToPDF(medicines.value, {
+      searchQuery: searchQuery.value || undefined,
+      category: categoryFilter.value || undefined
+    })
+    success('PDF导出成功')
+  } catch (error) {
+    console.error('Error exporting PDF:', error)
+    showError('PDF导出失败，请重试')
+  }
+}
 
 // 根据药品控制类型返回对应的颜色类名
 const getControlTypeColor = (controlTypes: string) => {

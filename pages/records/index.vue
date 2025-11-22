@@ -6,10 +6,9 @@
         <button 
           v-if="records.length > 0"
           @click="exportToPDF"
-          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex items-center gap-2"
+          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
-          <span>📄</span>
-          导出PDF
+          ↓ 导出PDF
         </button>
         <button 
           @click="openAddModal"
@@ -80,7 +79,9 @@
             <div class="flex-1">
               <h3 class="font-semibold text-lg">{{ record.medicine?.name }}{{ record.medicine?.brand ? `（${record.medicine?.brand}）` : '' }}</h3>
               <div class="mt-2 space-y-1 text-sm text-md-on-surface-variant">
-                <p><strong>服用剂量:</strong> {{ record.dosage }}</p>
+                <p>
+                  <strong>服用剂量:</strong> {{ record.dosage }}<span v-if="record.medicine?.dosage && record.medicine?.dosageUnit" class="text-gray-500">（{{ calculateTotalDosage(record.dosage, record.medicine.dosage, record.medicine.dosageUnit) }}）</span>
+                </p>
                 <p><strong>服用时间:</strong> {{ $formatDateTime(record.usageTime) }}</p>
                 <p v-if="record.notes"><strong>备注:</strong> {{ record.notes }}</p>
                 <p v-if="record.sideEffectNotes" class="text-md-error">
@@ -212,6 +213,23 @@ const exportToPDF = async () => {
     console.error('Error exporting PDF:', error)
     showError('PDF导出失败，请重试')
   }
+}
+
+// 计算总剂量
+const calculateTotalDosage = (dosage: string, unitDosage: string, unit: string): string => {
+  // 从服用剂量中提取数字（如 "2片" -> 2）
+  const match = dosage.match(/(\d+(\.\d+)?)/);
+  if (!match) return `${unitDosage}${unit}`;
+  
+  const quantity = parseFloat(match[1]);
+  const unitDosageNum = parseFloat(unitDosage);
+  
+  if (isNaN(quantity) || isNaN(unitDosageNum)) {
+    return `${unitDosage}${unit}`;
+  }
+  
+  const total = quantity * unitDosageNum;
+  return `${total}${unit}`;
 }
 
 // 使用全局注入的格式化函数
