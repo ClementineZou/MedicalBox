@@ -77,21 +77,12 @@
         :reference-range="selectedReferenceRange"
         :type="filters.type"
       />
-      <div v-if="selectedReferenceRange" class="mt-4 text-sm text-md-on-surface-variant">
-        <template v-if="filters.type === 'bloodPressure'">
-          <p>收缩压参考范围：{{ selectedReferenceRange.minValue || 90 }} - {{ selectedReferenceRange.maxValue || 120 }} {{ selectedReferenceRange.unit }}</p>
-          <p>舒张压参考范围：60 - 80 {{ selectedReferenceRange.unit }}</p>
-        </template>
-        <template v-else>
-          <p>{{ getReferenceLabel(filters.type) }}：{{ selectedReferenceRange.minValue }} - {{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}</p>
-        </template>
-      </div>
     </div>
 
     <div v-if="!loading && vitalsData.length === 0" class="bg-white rounded-md-lg shadow-md p-16 text-center">
       <div class="text-6xl mb-4">📊</div>
-      <p class="text-xl mb-2">暂无健康监测数据</p>
-      <p class="text-md-on-surface-variant">点击"添加监测记录"按钮开始记录您的健康数据</p>
+      <p class="text-lg font-semibold mb-2">暂无健康监测数据</p>
+      <p class="text-sm text-md-on-surface-variant">点击“添加监测记录”按钮开始记录您的健康数据</p>
     </div>
 
     <div v-else-if="!loading" class="bg-white rounded-md-lg shadow-md p-6">
@@ -155,6 +146,29 @@
           </tbody>
         </table>
       </div>
+      
+      <!-- 参考范围显示 -->
+      <div v-if="selectedReferenceRange" class="mt-6 p-4 bg-gray-50 rounded-md border-l-4 border-md-primary">
+        <h3 class="text-sm font-semibold text-md-on-surface mb-2">参考范围</h3>
+        <div class="text-sm text-md-on-surface-variant">
+          <template v-if="filters.type === 'bloodPressure'">
+            <div class="flex flex-wrap gap-4">
+              <div>
+                <span class="font-medium">收缩压：</span>
+                <span>{{ selectedReferenceRange.minValue || 90 }} - {{ selectedReferenceRange.maxValue || 120 }} {{ selectedReferenceRange.unit }}</span>
+              </div>
+              <div>
+                <span class="font-medium">舒张压：</span>
+                <span>60 - 80 {{ selectedReferenceRange.unit }}</span>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <span class="font-medium">{{ getReferenceLabel(filters.type) }}：</span>
+            <span>{{ selectedReferenceRange.minValue }} - {{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}</span>
+          </template>
+        </div>
+      </div>
     </div>
     
     <!-- 提醒列表 -->
@@ -162,7 +176,8 @@
       <h2 class="text-xl font-semibold mb-4">监测提醒</h2>
       
       <div v-if="remindersData.length === 0" class="text-center py-8 text-md-on-surface-variant">
-        <p>暂无监测提醒</p>
+        <div class="text-6xl mb-4">📅</div>
+        <p class="text-lg font-semibold mb-2">暂无监测提醒</p>
         <p class="text-sm mt-2">添加提醒以便定期记录您的健康数据</p>
       </div>
       
@@ -173,15 +188,22 @@
           class="border border-md-surface-variant rounded-md-md p-4 flex items-center justify-between hover:shadow-md transition-shadow"
         >
           <div class="flex-1">
-            <h3 class="font-semibold">{{ reminder.title }}</h3>
-            <div class="flex items-center gap-2">
-              <p class="text-sm text-md-on-surface-variant">
-                {{ getVitalSignTypeName(reminder.vitalSignType) }} - {{ $formatDateTime(reminder.reminderTime) }}
-              </p>
+            <div class="flex items-center gap-3">
+              <div class="text-3xl">
+                {{ getVitalSignTypeIcon(reminder.vitalSignType) }}
+              </div>
+              <div>
+                <h3 class="font-semibold">{{ reminder.title }}</h3>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm text-md-on-surface-variant">
+                    {{ getVitalSignTypeName(reminder.vitalSignType) }} - {{ $formatDateTime(reminder.reminderTime) }}
+                  </p>
+                </div>
+                <span class="inline-block mt-1 px-2 py-1 bg-md-primary-container text-md-on-primary-container rounded text-xs">
+                  {{ getFrequencyText(reminder.frequency) }}
+                </span>
+              </div>
             </div>
-            <span class="inline-block mt-1 px-2 py-1 bg-md-primary-container text-md-on-primary-container rounded text-xs">
-              {{ getFrequencyText(reminder.frequency) }}
-            </span>
           </div>
           <div class="flex gap-2">
             <button 
@@ -287,6 +309,20 @@ const getReferenceLabel = (type: string): string => {
     'heartRate': '静息心率参考范围'
   }
   return labelMap[type] || '正常参考范围'
+}
+
+// 获取体征类型图标
+const getVitalSignTypeIcon = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    'height': '📏',
+    'weight': '⚖️',
+    'temperature': '🌡️',
+    'bloodPressure': '💉',
+    'bloodOxygen': '🫁',
+    'bloodGlucose': '🩸',
+    'heartRate': '❤️'
+  }
+  return iconMap[type] || '📊'
 }
 
 // 获取频率文本
@@ -430,6 +466,11 @@ const deleteReminder = async (id: string) => {
 const handleSuccess = () => {
   loadData()
 }
+
+// 监听体征类型变化,自动刷新数据
+watch(() => filters.type, () => {
+  loadData()
+})
 
 // 页面加载时获取数据
 onMounted(() => {

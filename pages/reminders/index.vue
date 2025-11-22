@@ -42,6 +42,9 @@
             <p v-if="getDescription(reminder.description)" class="text-sm text-md-on-surface-variant mt-1">
               {{ getDescription(reminder.description) }}
             </p>
+            <span class="inline-block mt-1 px-2 py-1 bg-md-primary-container text-md-on-primary-container rounded text-xs">
+              {{ getFrequencyText(reminder.frequency) }}
+            </span>
           </div>
           <div class="flex gap-2">
             <button 
@@ -49,6 +52,12 @@
               class="bg-md-primary text-md-on-primary px-3 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
             >
               完成并记录
+            </button>
+            <button 
+              @click="openEditModal(reminder)"
+              class="bg-md-secondary text-md-on-secondary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+            >
+              编辑
             </button>
             <button 
               @click="deleteReminder(reminder.id)"
@@ -61,39 +70,33 @@
       </div>
     </div>
 
-    <!-- Upcoming Reminders -->
+    <!-- Completed Reminders -->
     <div class="bg-white rounded-md-lg shadow-md p-6">
-      <h2 class="text-xl font-semibold mb-4">即将到来的提醒</h2>
-      <div v-if="upcomingReminders.length === 0" class="text-center text-md-on-surface-variant py-8">
-        <p>暂无即将到来的提醒</p>
+      <h2 class="text-xl font-semibold mb-4">已完成的提醒</h2>
+      <div v-if="completedReminders.length === 0" class="text-center text-md-on-surface-variant py-8">
+        <p>暂无已完成的提醒</p>
       </div>
       <div v-else class="space-y-3">
         <div 
-          v-for="reminder in upcomingReminders" 
+          v-for="reminder in completedReminders" 
           :key="reminder.id"
-          class="border border-md-surface-variant rounded-md-md p-4 flex items-center justify-between hover:shadow-md transition-shadow"
+          class="border border-gray-300 bg-gray-50 rounded-md-md p-4 flex items-center justify-between opacity-75"
         >
           <div class="flex-1">
-            <h3 class="font-semibold">{{ reminder.title }}</h3>
+            <h3 class="font-semibold text-gray-700">{{ reminder.title }}</h3>
             <div class="flex items-center gap-2">
-              <p class="text-sm text-md-on-surface-variant">
+              <p class="text-sm text-gray-600">
                 {{ reminder.medicine?.name }}{{ reminder.medicine?.brand ? `（${reminder.medicine?.brand}）` : '' }} - {{ $formatDateTime(reminder.reminderTime) }}
               </p>
-              <span v-if="getDosage(reminder.description)" class="px-2 py-0.5 bg-md-tertiary-container text-md-on-tertiary-container rounded-full text-xs">
+              <span v-if="getDosage(reminder.description)" class="px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full text-xs">
                 {{ getDosage(reminder.description) }}{{ reminder.medicine?.quantityUnit || '单位' }}
               </span>
             </div>
-            <span class="inline-block mt-1 px-2 py-1 bg-md-primary-container text-md-on-primary-container rounded text-xs">
-              {{ getFrequencyText(reminder.frequency) }}
+            <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+              ✓ 已完成
             </span>
           </div>
           <div class="flex gap-2">
-            <button 
-              @click="openEditModal(reminder)"
-              class="bg-md-secondary text-md-on-secondary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
-            >
-              编辑
-            </button>
             <button 
               @click="deleteReminder(reminder.id)"
               class="bg-md-error text-md-on-error px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
@@ -211,16 +214,9 @@ const todayReminders = computed(() => {
   })
 })
 
-// 即将到来的提醒
-const upcomingReminders = computed(() => {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(0, 0, 0, 0)
-
-  return reminders.value.filter(r => {
-    const reminderDate = new Date(r.reminderTime)
-    return !r.isCompleted && reminderDate >= tomorrow
-  }).slice(0, 10)
+// 已完成的提醒
+const completedReminders = computed(() => {
+  return reminders.value.filter(r => r.isCompleted).slice(0, 10)
 })
 
 // 加载提醒和药品
