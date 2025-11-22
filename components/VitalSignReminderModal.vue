@@ -16,8 +16,9 @@
           <select
             id="vitalSignType"
             v-model="form.vitalSignType"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+            :class="errors.vitalSignType ? 'border-red-500' : 'border-md-surface-variant'"
+            @blur="validateField('vitalSignType', form.vitalSignType)"
           >
             <option value="height">身高</option>
             <option value="weight">体重</option>
@@ -27,6 +28,7 @@
             <option value="bloodGlucose">血糖</option>
             <option value="heartRate">心率</option>
           </select>
+          <p v-if="errors.vitalSignType" class="text-red-500 text-xs mt-1">{{ errors.vitalSignType }}</p>
         </div>
         
         <!-- 提醒频率 -->
@@ -35,14 +37,16 @@
           <select
             id="frequency"
             v-model="form.frequency"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+            :class="errors.frequency ? 'border-red-500' : 'border-md-surface-variant'"
+            @blur="validateField('frequency', form.frequency)"
           >
             <option value="once">仅一次</option>
             <option value="daily">每天</option>
             <option value="weekly">每周</option>
             <option value="monthly">每月</option>
           </select>
+          <p v-if="errors.frequency" class="text-red-500 text-xs mt-1">{{ errors.frequency }}</p>
         </div>
 
         <!-- 根据不同频率显示不同设置 -->
@@ -53,9 +57,11 @@
             <input
               v-model="form.reminderTime"
               type="datetime-local"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.reminderTime ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('reminderTime', form.reminderTime)"
             />
+            <p v-if="errors.reminderTime" class="text-red-500 text-xs mt-1">{{ errors.reminderTime }}</p>
           </div>
         </template>
 
@@ -93,7 +99,7 @@
         <template v-else-if="form.frequency === 'weekly'">
           <!-- 每周设置 -->
           <div>
-            <label class="block text-sm font-medium mb-1">每周几</label>
+            <label class="block text-sm font-medium mb-1">每周几 <span class="text-red-500">*</span></label>
             <div class="grid grid-cols-7 gap-2">
               <button 
                 v-for="day in 7" 
@@ -110,6 +116,7 @@
                 {{ getWeekDayLabel(day) }}
               </button>
             </div>
+            <p v-if="errors.weeklyDays" class="text-red-500 text-xs mt-1">{{ errors.weeklyDays }}</p>
           </div>
 
           <!-- 时间选择 -->
@@ -183,6 +190,7 @@
 import type { VitalSignReminder } from '~/types'
 import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime'
 import useReminderFrequency from '~/composables/useReminderFrequency'
+import { useFormValidation, validators } from '~/composables/useFormValidation'
 
 const props = defineProps<{
   isOpen: boolean
@@ -218,6 +226,31 @@ const form = reactive({
   description: ''
 })
 
+// 验证规则
+const rules = computed(() => {
+  const baseRules = {
+    vitalSignType: [validators.required()],
+    frequency: [validators.required()]
+  }
+
+  if (form.frequency === 'once') {
+    return {
+      ...baseRules,
+      reminderTime: [validators.required()]
+    }
+  } else if (form.frequency === 'weekly') {
+    // Custom validator for weeklyDays
+    return {
+      ...baseRules,
+      weeklyDays: [(val: any) => (weeklyDays.value.length > 0) || '请至少选择一天']
+    }
+  }
+  
+  return baseRules
+})
+
+const { errors, validateField, validateForm, clearErrors, setError } = useFormValidation(form, rules.value)
+
 // 切换星期几选中状态 (Local implementation as composable version needs Ref<number[]>)
 const toggleWeekDay = (day: number) => {
   const index = weeklyDays.value.indexOf(day)
@@ -229,6 +262,15 @@ const toggleWeekDay = (day: number) => {
   // 确保至少选择一天
   if (weeklyDays.value.length === 0) {
     weeklyDays.value.push(day)
+  }
+  
+  // Manually validate weeklyDays
+  if (form.frequency === 'weekly') {
+    if (weeklyDays.value.length === 0) {
+      setError('weeklyDays', '请至少选择一天')
+    } else {
+      if (errors.value.weeklyDays) delete errors.value.weeklyDays
+    }
   }
 }
 
@@ -250,6 +292,7 @@ const resetForm = () => {
   weeklyTime.value = '08:00'
   monthlyDay.value = 1
   monthlyTime.value = '08:00'
+  clearErrors()
 }
 
 // 监听 reminder 变化，更新表单
@@ -371,6 +414,29 @@ const prepareSubmitData = () => {
 
 // 提交表单
 const submit = async () => {
+  // Manual validation logic
+  let localIsValid = true
+  clearErrors()
+  
+  const currentRulesObj = rules.value
+  for (const field in currentRulesObj) {
+    const fieldRules = (currentRulesObj as any)[field]
+    for (const rule of fieldRules) {
+      // Special handling for weeklyDays which is not in form
+      let val = form[field as keyof typeof form]
+      if (field === 'weeklyDays') val = weeklyDays.value as any
+      
+      const result = rule(val)
+      if (result !== true) {
+        errors.value[field] = typeof result === 'string' ? result : 'Invalid value'
+        localIsValid = false
+        break
+      }
+    }
+  }
+  
+  if (!localIsValid) return
+
   loading.value = true
   try {
     const submitData = prepareSubmitData()

@@ -13,17 +13,19 @@
       <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
         <!-- 选择药品 -->
         <div>
-          <label class="block text-sm font-medium mb-1">选择药品 *</label>
+          <label class="block text-sm font-medium mb-1">选择药品 <span class="text-red-500">*</span></label>
           <select 
             v-model="form.medicineId"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+            :class="errors.medicineId ? 'border-red-500' : 'border-md-surface-variant'"
+            @blur="validateField('medicineId', form.medicineId)"
           >
             <option value="">请选择药品</option>
             <option v-for="medicine in medicines" :key="medicine.id" :value="medicine.id">
               {{ medicine.name }}
             </option>
           </select>
+          <p v-if="errors.medicineId" class="text-red-500 text-xs mt-1">{{ errors.medicineId }}</p>
         </div>
 
         <div v-if="selectedMedicine" class="bg-md-surface-variant bg-opacity-30 p-3 rounded-md-sm">
@@ -36,7 +38,7 @@
 
         <!-- 服用剂量选择器 -->
         <div v-if="selectedMedicine">
-          <label class="block text-sm font-medium mb-1">服用剂量 *</label>
+          <label class="block text-sm font-medium mb-1">服用剂量 <span class="text-red-500">*</span></label>
           <div class="flex gap-2">
             <div class="flex-1 flex flex-wrap gap-2">
               <button 
@@ -54,28 +56,31 @@
                 {{ amount }}{{ selectedMedicine ? selectedMedicine.quantityUnit : '' }}
               </button>
             </div>
-            <div class="flex">
-              <input 
-                v-model="dosageAmount"
-                type="number"
-                required
-                min="0.5"
-                step="0.5"
-                class="w-20 px-3 py-2 border border-md-surface-variant rounded-l-md-sm focus:outline-none focus:border-md-primary"
-                placeholder="数量"
-              >
-              <span 
-                class="px-3 py-2 border border-l-0 border-md-surface-variant rounded-r-md-sm bg-gray-50 inline-flex items-center"
-              >
-                {{ selectedMedicine.quantityUnit }}
-              </span>
+            <div class="flex flex-col">
+              <div class="flex">
+                <input 
+                  v-model="dosageAmount"
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  class="w-20 px-3 py-2 border rounded-l-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.dosageAmount ? 'border-red-500' : 'border-md-surface-variant'"
+                  placeholder="数量"
+                >
+                <span 
+                  class="px-3 py-2 border border-l-0 border-md-surface-variant rounded-r-md-sm bg-gray-50 inline-flex items-center"
+                >
+                  {{ selectedMedicine.quantityUnit }}
+                </span>
+              </div>
+              <p v-if="errors.dosageAmount" class="text-red-500 text-xs mt-1">{{ errors.dosageAmount }}</p>
             </div>
           </div>
         </div>
 
         <!-- 服用时间 -->
         <div>
-          <label class="block text-sm font-medium mb-1">服用时间 *</label>
+          <label class="block text-sm font-medium mb-1">服用时间 <span class="text-red-500">*</span></label>
           <div class="flex items-center gap-2">
             <button 
               type="button" 
@@ -87,16 +92,18 @@
             <input 
               v-model="form.usageTime"
               type="datetime-local"
-              required
-              class="flex-1 px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="flex-1 px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.usageTime ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('usageTime', form.usageTime)"
             >
           </div>
+          <p v-if="errors.usageTime" class="text-red-500 text-xs mt-1">{{ errors.usageTime }}</p>
         </div>
 
         <!-- 副作用记录 -->
         <div>
           <label class="block text-sm font-medium mb-1 flex items-center">
-            <span>副作用记录 *</span>
+            <span>副作用记录 <span class="text-red-500">*</span></span>
             <button 
               type="button"
               @click="() => toggleSideEffectInput()"
@@ -110,28 +117,28 @@
             <button 
               type="button" 
               class="bg-md-surface text-md-on-surface border border-md-surface-variant px-3 py-1 rounded-md-sm hover:bg-md-surface-variant"
-              @click="form.sideEffectNotes = '无副作用'; toggleSideEffectInput(false)"
+              @click="setSideEffect('无副作用')"
             >
               无副作用
             </button>
             <button 
               type="button" 
               class="bg-md-surface text-md-on-surface border border-md-surface-variant px-3 py-1 rounded-md-sm hover:bg-md-surface-variant"
-              @click="form.sideEffectNotes = '轻微头晕'; toggleSideEffectInput(false)"
+              @click="setSideEffect('轻微头晕')"
             >
               轻微头晕
             </button>
             <button 
               type="button" 
               class="bg-md-surface text-md-on-surface border border-md-surface-variant px-3 py-1 rounded-md-sm hover:bg-md-surface-variant"
-              @click="form.sideEffectNotes = '轻微胃部不适'; toggleSideEffectInput(false)"
+              @click="setSideEffect('轻微胃部不适')"
             >
               轻微胃部不适
             </button>
             <button 
               type="button" 
               class="bg-md-surface text-md-on-surface border border-md-surface-variant px-3 py-1 rounded-md-sm hover:bg-md-surface-variant"
-              @click="form.sideEffectNotes = '嗜睡'; toggleSideEffectInput(false)"
+              @click="setSideEffect('嗜睡')"
             >
               嗜睡
             </button>
@@ -141,14 +148,16 @@
             v-if="showSideEffectInput"
             v-model="form.sideEffectNotes"
             rows="2"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary mt-1"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary mt-1"
+            :class="errors.sideEffectNotes ? 'border-red-500' : 'border-md-surface-variant'"
             placeholder="是否有副作用反应（必填）"
+            @blur="validateField('sideEffectNotes', form.sideEffectNotes)"
           ></textarea>
           
           <div v-else-if="form.sideEffectNotes" class="mt-1 px-3 py-2 bg-gray-50 rounded-md-sm text-sm">
             {{ form.sideEffectNotes }}
           </div>
+          <p v-if="errors.sideEffectNotes" class="text-red-500 text-xs mt-1">{{ errors.sideEffectNotes }}</p>
         </div>
 
         <!-- 备注 -->
@@ -188,6 +197,7 @@
 import type { Medicine, MedicineUsageRecord } from '~/types'
 import { useNotification } from '~/composables/useNotification'
 import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime'
+import { useFormValidation, validators } from '~/composables/useFormValidation'
 
 const props = defineProps<{
   isOpen: boolean
@@ -226,6 +236,15 @@ const form = ref({
   id: ''
 })
 
+// 验证规则
+const rules = {
+  medicineId: [validators.required()],
+  usageTime: [validators.required()],
+  sideEffectNotes: [validators.required('请填写副作用反应信息（无副作用也需填写）')]
+}
+
+const { errors, validateField, validateForm, clearErrors, setError } = useFormValidation(form.value, rules)
+
 // 监听props.reminderId变化
 watch(() => props.reminderId, (id) => {
   if (id) {
@@ -261,6 +280,7 @@ watch(() => props.record, (record) => {
       showSideEffectInput.value = true
     }
   }
+  clearErrors()
 }, { immediate: true })
 
 // 选中的药品信息
@@ -293,6 +313,8 @@ watch(() => form.value.medicineId, (medicineId) => {
 
 const setCurrentTime = () => {
   form.value.usageTime = $getCurrentISOString()
+  // Clear error for usageTime
+  if (errors.value.usageTime) delete errors.value.usageTime
 }
 
 const toggleSideEffectInput = (state?: boolean) => {
@@ -301,6 +323,13 @@ const toggleSideEffectInput = (state?: boolean) => {
   } else {
     showSideEffectInput.value = !showSideEffectInput.value
   }
+}
+
+const setSideEffect = (note: string) => {
+  form.value.sideEffectNotes = note
+  toggleSideEffectInput(false)
+  // Clear error
+  if (errors.value.sideEffectNotes) delete errors.value.sideEffectNotes
 }
 
 const closeModal = () => {
@@ -317,6 +346,7 @@ const closeModal = () => {
   }
   dosageAmount.value = 1
   showSideEffectInput.value = false
+  clearErrors()
 }
 
 // 监听剂量值，自动更新表单中的剂量字符串
@@ -324,15 +354,39 @@ watch(dosageAmount, (amount) => {
   if (selectedMedicine.value && amount) {
     form.value.dosage = `${amount}${selectedMedicine.value.quantityUnit}`
   }
+  // Validate dosageAmount
+  if (amount <= 0) {
+    setError('dosageAmount', '剂量必须大于0')
+  } else {
+    if (errors.value.dosageAmount) delete errors.value.dosageAmount
+  }
 })
 
 const handleSubmit = async () => {
-  // 验证必填项
-  if (!form.value.sideEffectNotes) {
-    const { error: showError } = useNotification()
-    showError('请填写副作用反应信息（无副作用也需填写）')
-    return
+  // Manual validation
+  let isValid = true
+  clearErrors()
+  
+  for (const field in rules) {
+    const fieldRules = rules[field as keyof typeof rules]
+    const val = form.value[field as keyof typeof form.value]
+    for (const rule of fieldRules) {
+      const result = rule(val)
+      if (result !== true) {
+        errors.value[field] = typeof result === 'string' ? result : 'Invalid value'
+        isValid = false
+        break
+      }
+    }
   }
+  
+  // Validate dosageAmount
+  if (dosageAmount.value <= 0) {
+    setError('dosageAmount', '剂量必须大于0')
+    isValid = false
+  }
+  
+  if (!isValid) return
   
   loading.value = true
   try {

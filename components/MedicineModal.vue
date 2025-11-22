@@ -14,47 +14,54 @@
         <div class="grid md:grid-cols-2 gap-4">
           <!-- 药品通用名 -->
           <div>
-            <label class="block text-sm font-medium mb-1">药品通用名 *</label>
+            <label class="block text-sm font-medium mb-1">药品通用名 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.name" 
               type="text" 
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.name ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：阿莫西林"
+              @blur="validateField('name', form.name)"
             >
+            <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name }}</p>
           </div>
           
           <!-- 品牌/厂家 -->
           <div>
-            <label class="block text-sm font-medium mb-1">品牌/厂家 *</label>
+            <label class="block text-sm font-medium mb-1">品牌/厂家 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.brand" 
               type="text"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.brand ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：XX制药"
+              @blur="validateField('brand', form.brand)"
             >
+            <p v-if="errors.brand" class="text-red-500 text-xs mt-1">{{ errors.brand }}</p>
           </div>
 
           <!-- 批准文号 (单独一行) -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">批准文号 *</label>
+            <label class="block text-sm font-medium mb-1">批准文号 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.approvalNo" 
               type="text"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.approvalNo ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：国药准字H12345678"
+              @blur="validateField('approvalNo', form.approvalNo)"
             >
+            <p v-if="errors.approvalNo" class="text-red-500 text-xs mt-1">{{ errors.approvalNo }}</p>
           </div>
           
           <!-- 用途分类 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">用途分类 *</label>
+            <label class="block text-sm font-medium mb-1">用途分类 <span class="text-red-500">*</span></label>
             <select 
               v-model="form.category"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.category ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('category', form.category)"
             >
               <option value="">请选择分类</option>
               <option value="解热镇痛药">解热镇痛药</option>
@@ -73,12 +80,16 @@
               <option value="皮肤用药">皮肤用药</option>
               <option value="其他">其他</option>
             </select>
+            <p v-if="errors.category" class="text-red-500 text-xs mt-1">{{ errors.category }}</p>
           </div>
 
           <!-- 管制分类 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">管制分类 *</label>
-            <div class="grid grid-cols-2 gap-2 p-2 border border-md-surface-variant rounded-md-sm">
+            <label class="block text-sm font-medium mb-1">管制分类 <span class="text-red-500">*</span></label>
+            <div 
+              class="grid grid-cols-2 gap-2 p-2 border rounded-md-sm"
+              :class="errors.controlTypes ? 'border-red-500' : 'border-md-surface-variant'"
+            >
               <div v-for="(type, index) in controlTypeOptions" :key="index" class="flex items-center">
                 <input 
                   type="checkbox" 
@@ -93,46 +104,54 @@
                 (请至少选择一项)
               </div>
             </div>
+            <p v-if="errors.controlTypes" class="text-red-500 text-xs mt-1">{{ errors.controlTypes }}</p>
           </div>
 
           <!-- 适应症 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">适应症 *</label>
+            <label class="block text-sm font-medium mb-1">适应症 <span class="text-red-500">*</span></label>
             <textarea 
               v-model="form.indications" 
               rows="3"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.indications ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：用于感冒引起的发热、咽痛、头痛等症状"
+              @blur="validateField('indications', form.indications)"
             ></textarea>
+            <p v-if="errors.indications" class="text-red-500 text-xs mt-1">{{ errors.indications }}</p>
           </div>
 
           <!-- 用法用量 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">用法用量 *</label>
+            <label class="block text-sm font-medium mb-1">用法用量 <span class="text-red-500">*</span></label>
             <textarea 
               v-model="form.usage"
               rows="3"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.usage ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：每日3次，每次1粒，饭后服用"
+              @blur="validateField('usage', form.usage)"
             ></textarea>
+            <p v-if="errors.usage" class="text-red-500 text-xs mt-1">{{ errors.usage }}</p>
           </div>
 
           <!-- 剂量规格 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">剂量规格 *</label>
+            <label class="block text-sm font-medium mb-1">剂量规格 <span class="text-red-500">*</span></label>
             <div class="flex gap-2">
-              <input 
-                v-model="form.dosage" 
-                type="text"
-                required
-                class="flex-1 px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-                placeholder="例如：500"
-              >
+              <div class="flex-1">
+                <input 
+                  v-model="form.dosage" 
+                  type="text"
+                  class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.dosage ? 'border-red-500' : 'border-md-surface-variant'"
+                  placeholder="例如：500"
+                  @blur="validateField('dosage', form.dosage)"
+                >
+                <p v-if="errors.dosage" class="text-red-500 text-xs mt-1">{{ errors.dosage }}</p>
+              </div>
               <select 
                 v-model="form.dosageUnit"
-                required
                 class="w-24 px-2 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
               >
                 <option value="mg">mg</option>
@@ -148,18 +167,21 @@
 
           <!-- 库存数量 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">库存数量 *</label>
+            <label class="block text-sm font-medium mb-1">库存数量 <span class="text-red-500">*</span></label>
             <div class="flex gap-2">
-              <input 
-                v-model.number="form.quantity" 
-                type="number"
-                required
-                min="0"
-                class="flex-1 px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-              >
+              <div class="flex-1">
+                <input 
+                  v-model.number="form.quantity" 
+                  type="number"
+                  min="0"
+                  class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.quantity ? 'border-red-500' : 'border-md-surface-variant'"
+                  @blur="validateField('quantity', form.quantity)"
+                >
+                <p v-if="errors.quantity" class="text-red-500 text-xs mt-1">{{ errors.quantity }}</p>
+              </div>
               <select 
                 v-model="form.quantityUnit"
-                required
                 class="w-24 px-2 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
               >
                 <option value="片">片</option>
@@ -177,25 +199,29 @@
 
           <!-- 有效期至 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">有效期至 *</label>
+            <label class="block text-sm font-medium mb-1">有效期至 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.expiryDate" 
               type="date"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.expiryDate ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('expiryDate', form.expiryDate)"
             >
+            <p v-if="errors.expiryDate" class="text-red-500 text-xs mt-1">{{ errors.expiryDate }}</p>
           </div>
 
           <!-- 存放位置 -->
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">存放位置 *</label>
+            <label class="block text-sm font-medium mb-1">存放位置 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.location" 
               type="text"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.location ? 'border-red-500' : 'border-md-surface-variant'"
               placeholder="例如：卧室抽屉、客厅药箱"
+              @blur="validateField('location', form.location)"
             >
+            <p v-if="errors.location" class="text-red-500 text-xs mt-1">{{ errors.location }}</p>
           </div>
 
           <!-- 备注 -->
@@ -338,12 +364,11 @@
 
             <!-- 服用剂量 -->
             <div>
-              <label class="block text-sm font-medium mb-1">服用剂量 *</label>
+              <label class="block text-sm font-medium mb-1">服用剂量 <span class="text-red-500">*</span></label>
               <div class="flex gap-2">
                 <input 
                   v-model="reminderDosage" 
                   type="number"
-                  required
                   min="0.5"
                   step="0.5"
                   class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
@@ -392,6 +417,7 @@ import type { Medicine } from '~/types'
 import { useNotification } from '~/composables/useNotification'
 import useReminderFrequency from '~/composables/useReminderFrequency'
 import { toLocalISOStringForInput, toLocalDateString } from '~/utils/localTime'
+import { useFormValidation, validators } from '~/composables/useFormValidation'
 
 const props = defineProps<{
   isOpen: boolean
@@ -465,6 +491,22 @@ const form = ref({
   notes: ''
 })
 
+// 验证规则
+const rules = {
+  name: [validators.required()],
+  brand: [validators.required()],
+  category: [validators.required()],
+  dosage: [validators.required()],
+  quantity: [validators.required(), validators.nonNegative()],
+  indications: [validators.required()],
+  usage: [validators.required()],
+  expiryDate: [validators.required()],
+  location: [validators.required()],
+  approvalNo: [validators.required()]
+}
+
+const { errors, validateField, validateForm, clearErrors, setError } = useFormValidation(form.value, rules)
+
 // 当 medicine prop 变化时更新表单
 watch(() => props.medicine, (medicine) => {
   if (medicine) {
@@ -515,6 +557,7 @@ watch(() => props.medicine, (medicine) => {
     dailyTimes.value = '1'
     reminderTimeSlots.value = ['08:00']
   }
+  clearErrors()
 }, { immediate: true })
 
 const closeModal = () => {
@@ -554,12 +597,34 @@ const toggleWeekDay = (day: number) => {
 }
 
 const handleSubmit = async () => {
-  // 检查是否至少选择了一个管制分类
-  if (selectedControlTypes.value.length === 0) {
-    const { error: showError } = useNotification()
-    showError('请至少选择一个管制分类')
-    return
+  // Validate form
+  let isValid = true
+  clearErrors()
+  
+  // Manually validate fields because form is a ref and useFormValidation was initialized with form.value which might be stale if not reactive deep
+  // Actually useFormValidation takes initialForm. If form.value is replaced, the reference in useFormValidation is lost.
+  // So we need to manually validate here.
+  
+  for (const field in rules) {
+    const fieldRules = rules[field as keyof typeof rules]
+    const val = form.value[field as keyof typeof form.value]
+    for (const rule of fieldRules) {
+      const result = rule(val)
+      if (result !== true) {
+        errors.value[field] = typeof result === 'string' ? result : 'Invalid value'
+        isValid = false
+        break
+      }
+    }
   }
+  
+  // Validate control types
+  if (selectedControlTypes.value.length === 0) {
+    setError('controlTypes', '请至少选择一个管制分类')
+    isValid = false
+  }
+  
+  if (!isValid) return
   
   // 验证用药提醒表单
   if (createReminder.value) {

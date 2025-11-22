@@ -11,8 +11,9 @@
             <select
               id="type"
               v-model="form.type"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.type ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('type', form.type)"
             >
               <option value="height">身高</option>
               <option value="weight">体重</option>
@@ -22,31 +23,41 @@
               <option value="bloodGlucose">血糖</option>
               <option value="heartRate">心率</option>
             </select>
+            <p v-if="errors.type" class="text-red-500 text-xs mt-1">{{ errors.type }}</p>
           </div>
           
           <!-- 数值 (血压) -->
           <div v-if="form.type === 'bloodPressure'" class="md:col-span-2">
             <label class="block text-sm font-medium mb-1">血压 (收缩压/舒张压) <span class="text-red-500">*</span></label>
-            <div class="flex items-center gap-2">
-              <input
-                v-model="form.systolic"
-                type="number"
-                placeholder="收缩压"
-                required
-                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-              />
-              <span class="text-xl">/</span>
-              <input
-                v-model="form.diastolic"
-                type="number"
-                placeholder="舒张压"
-                required
-                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-              />
+            <div class="flex items-start gap-2">
+              <div class="flex-1">
+                <input
+                  v-model="form.systolic"
+                  type="number"
+                  placeholder="收缩压"
+                  class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.systolic ? 'border-red-500' : 'border-md-surface-variant'"
+                  @blur="validateField('systolic', form.systolic)"
+                  @input="validateField('systolic', form.systolic)"
+                />
+                <p v-if="errors.systolic" class="text-red-500 text-xs mt-1">{{ errors.systolic }}</p>
+              </div>
+              <span class="text-xl pt-2">/</span>
+              <div class="flex-1">
+                <input
+                  v-model="form.diastolic"
+                  type="number"
+                  placeholder="舒张压"
+                  class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.diastolic ? 'border-red-500' : 'border-md-surface-variant'"
+                  @blur="validateField('diastolic', form.diastolic)"
+                  @input="validateField('diastolic', form.diastolic)"
+                />
+                <p v-if="errors.diastolic" class="text-red-500 text-xs mt-1">{{ errors.diastolic }}</p>
+              </div>
               <div class="relative w-24 flex-shrink-0">
                 <select
                   v-model="form.unit"
-                  required
                   class="w-full px-2 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
                 >
                   <option v-for="unit in getUnitsForType(form.type)" :key="unit" :value="unit">{{ unit }}</option>
@@ -58,19 +69,23 @@
           <!-- 数值 (其他) -->
           <div v-else class="md:col-span-2">
             <label for="value" class="block text-sm font-medium mb-1">数值 <span class="text-red-500">*</span></label>
-            <div class="flex items-center">
-              <input
-                id="value"
-                v-model="form.value"
-                type="number"
-                step="0.01"
-                required
-                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
-              />
+            <div class="flex items-start">
+              <div class="flex-1">
+                <input
+                  id="value"
+                  v-model="form.value"
+                  type="number"
+                  step="0.01"
+                  class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+                  :class="errors.value ? 'border-red-500' : 'border-md-surface-variant'"
+                  @blur="validateField('value', form.value)"
+                  @input="validateField('value', form.value)"
+                />
+                <p v-if="errors.value" class="text-red-500 text-xs mt-1">{{ errors.value }}</p>
+              </div>
               <div class="relative ml-2 w-24 flex-shrink-0">
                 <select
                   v-model="form.unit"
-                  required
                   class="w-full px-2 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
                 >
                   <option v-for="unit in getUnitsForType(form.type)" :key="unit" :value="unit">{{ unit }}</option>
@@ -86,9 +101,11 @@
               id="measureTime"
               v-model="form.measureTime"
               type="datetime-local"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.measureTime ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('measureTime', form.measureTime)"
             />
+            <p v-if="errors.measureTime" class="text-red-500 text-xs mt-1">{{ errors.measureTime }}</p>
           </div>
         </div>
         
@@ -127,6 +144,7 @@
 <script setup lang="ts">
 import type { VitalSign, VitalSignReferenceRange } from '~/types'
 import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime'
+import { useFormValidation, validators } from '~/composables/useFormValidation'
 
 const props = defineProps<{
   isOpen: boolean
@@ -151,6 +169,29 @@ const form = reactive({
   measureTime: toLocalISOStringForInput(new Date()),
   notes: ''
 })
+
+// 验证规则
+const rules = computed(() => {
+  const commonRules = {
+    type: [validators.required()],
+    measureTime: [validators.required()]
+  }
+
+  if (form.type === 'bloodPressure') {
+    return {
+      ...commonRules,
+      systolic: [validators.required('请输入收缩压'), validators.numeric(), validators.positive()],
+      diastolic: [validators.required('请输入舒张压'), validators.numeric(), validators.positive()]
+    }
+  } else {
+    return {
+      ...commonRules,
+      value: [validators.required('请输入数值'), validators.numeric(), validators.positive()]
+    }
+  }
+})
+
+const { errors, validateField, validateForm, clearErrors } = useFormValidation(form, rules.value)
 
 // 加载参考范围
 const loadReferenceRanges = async () => {
@@ -210,6 +251,7 @@ const resetForm = () => {
   form.unit = 'kg'
   form.measureTime = toLocalISOStringForInput(new Date())
   form.notes = ''
+  clearErrors()
 }
 
 // 监听 vitalSign 变化，更新表单
@@ -257,10 +299,31 @@ watch(() => form.type, (newType) => {
   if (!units.includes(form.unit)) {
     form.unit = units[0]
   }
+  // Clear errors when type changes as fields might change
+  clearErrors()
 })
 
 // 提交表单
 const submit = async () => {
+  // Manually validate using current rules because useFormValidation might hold stale rules if not reactive
+  let localIsValid = true
+  clearErrors()
+  
+  const currentRulesObj = rules.value
+  for (const field in currentRulesObj) {
+    const fieldRules = (currentRulesObj as any)[field]
+    for (const rule of fieldRules) {
+      const result = rule(form[field as keyof typeof form])
+      if (result !== true) {
+        errors.value[field] = typeof result === 'string' ? result : 'Invalid value'
+        localIsValid = false
+        break // Stop at first error for this field
+      }
+    }
+  }
+  
+  if (!localIsValid) return
+
   try {
     // 计算状态
     const { isNormal, referenceRange } = calculateStatus()

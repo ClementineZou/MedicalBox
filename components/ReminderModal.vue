@@ -13,47 +13,53 @@
       <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
         <!-- 选择药品 -->
         <div v-if="!isEdit">
-          <label class="block text-sm font-medium mb-1">选择药品 *</label>
+          <label class="block text-sm font-medium mb-1">选择药品 <span class="text-red-500">*</span></label>
           <select 
             v-model="form.medicineId"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+            :class="errors.medicineId ? 'border-red-500' : 'border-md-surface-variant'"
+            @blur="validateField('medicineId', form.medicineId)"
           >
             <option value="">请选择药品</option>
             <option v-for="medicine in medicines" :key="medicine.id" :value="medicine.id">
               {{ medicine.name }}
             </option>
           </select>
+          <p v-if="errors.medicineId" class="text-red-500 text-xs mt-1">{{ errors.medicineId }}</p>
         </div>
 
         <!-- 提醒标题由系统自动生成，不需要用户输入 -->
 
         <!-- 频率选择 -->
         <div>
-          <label class="block text-sm font-medium mb-1">提醒频率 *</label>
+          <label class="block text-sm font-medium mb-1">提醒频率 <span class="text-red-500">*</span></label>
           <select 
             v-model="form.frequency"
-            required
-            class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+            class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+            :class="errors.frequency ? 'border-red-500' : 'border-md-surface-variant'"
+            @blur="validateField('frequency', form.frequency)"
           >
             <option value="once">仅一次</option>
             <option value="daily">每天</option>
             <option value="weekly">每周</option>
             <option value="monthly">每月</option>
           </select>
+          <p v-if="errors.frequency" class="text-red-500 text-xs mt-1">{{ errors.frequency }}</p>
         </div>
 
         <!-- 根据不同频率显示不同设置 -->
         <template v-if="form.frequency === 'once' || form.frequency === 'custom'">
           <!-- 单次提醒时间 -->
           <div>
-            <label class="block text-sm font-medium mb-1">提醒时间 *</label>
+            <label class="block text-sm font-medium mb-1">提醒时间 <span class="text-red-500">*</span></label>
             <input 
               v-model="form.reminderTime"
               type="datetime-local"
-              required
-              class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
+              :class="errors.reminderTime ? 'border-red-500' : 'border-md-surface-variant'"
+              @blur="validateField('reminderTime', form.reminderTime)"
             >
+            <p v-if="errors.reminderTime" class="text-red-500 text-xs mt-1">{{ errors.reminderTime }}</p>
           </div>
         </template>
 
@@ -91,7 +97,7 @@
         <template v-else-if="form.frequency === 'weekly'">
           <!-- 每周设置 -->
           <div>
-            <label class="block text-sm font-medium mb-1">每周几</label>
+            <label class="block text-sm font-medium mb-1">每周几 <span class="text-red-500">*</span></label>
             <div class="grid grid-cols-7 gap-2">
               <button 
                 v-for="day in 7" 
@@ -108,6 +114,7 @@
                 {{ getWeekDayLabel(day) }}
               </button>
             </div>
+            <p v-if="errors.weeklyDays" class="text-red-500 text-xs mt-1">{{ errors.weeklyDays }}</p>
           </div>
 
           <!-- 时间选择 -->
@@ -148,7 +155,7 @@
 
         <!-- 服用剂量 -->
         <div v-if="selectedMedicine">
-          <label class="block text-sm font-medium mb-1">服用剂量 *</label>
+          <label class="block text-sm font-medium mb-1">服用剂量 <span class="text-red-500">*</span></label>
           <div class="flex">
             <div class="flex items-center w-full">
               <div class="flex-1 flex flex-wrap gap-2 mr-2">
@@ -167,18 +174,21 @@
                   {{ amount }}{{ selectedMedicine.quantityUnit }}
                 </button>
               </div>
-              <div class="flex w-32">
-                <input 
-                  v-model="dosageAmount" 
-                  type="number"
-                  required
-                  min="0.5"
-                  step="0.5"
-                  class="w-20 px-4 py-2 border border-md-surface-variant rounded-l-md-sm focus:outline-none focus:border-md-primary"
-                >
-                <span class="flex items-center px-2 py-2 border border-l-0 border-md-surface-variant rounded-r-md-sm bg-gray-50">
-                  {{ selectedMedicine.quantityUnit }}
-                </span>
+              <div class="flex flex-col w-32">
+                <div class="flex">
+                  <input 
+                    v-model="dosageAmount" 
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    class="w-20 px-4 py-2 border rounded-l-md-sm focus:outline-none focus:border-md-primary"
+                    :class="errors.dosageAmount ? 'border-red-500' : 'border-md-surface-variant'"
+                  >
+                  <span class="flex items-center px-2 py-2 border border-l-0 border-md-surface-variant rounded-r-md-sm bg-gray-50">
+                    {{ selectedMedicine.quantityUnit }}
+                  </span>
+                </div>
+                <p v-if="errors.dosageAmount" class="text-red-500 text-xs mt-1">{{ errors.dosageAmount }}</p>
               </div>
             </div>
           </div>
@@ -222,6 +232,7 @@ import type { Reminder, Medicine } from '~/types'
 import { useNotification } from '~/composables/useNotification'
 import useReminderFrequency from '~/composables/useReminderFrequency'
 import { toLocalISOString, toLocalISOStringForInput } from '~/utils/localTime'
+import { useFormValidation, validators } from '~/composables/useFormValidation'
 
 const props = defineProps<{
   isOpen: boolean
@@ -278,6 +289,30 @@ const form = ref({
   isCompleted: false
 })
 
+// 验证规则
+const rules = computed(() => {
+  const baseRules = {
+    medicineId: [validators.required()],
+    frequency: [validators.required()]
+  }
+
+  if (form.value.frequency === 'once') {
+    return {
+      ...baseRules,
+      reminderTime: [validators.required()]
+    }
+  } else if (form.value.frequency === 'weekly') {
+    return {
+      ...baseRules,
+      weeklyDays: [(val: any) => (weeklyDays.value.length > 0) || '请至少选择一天']
+    }
+  }
+  
+  return baseRules
+})
+
+const { errors, validateField, validateForm, clearErrors, setError } = useFormValidation(form.value, rules.value)
+
 // 监听每日次数变化，自动调整时间槽数量
 watch(dailyTimes, (newVal) => {
   handleDailyTimesChange(newVal, reminderTimeSlots)
@@ -294,6 +329,15 @@ const toggleWeekDay = (day: number) => {
   // 确保至少选择一天
   if (weeklyDays.value.length === 0) {
     weeklyDays.value.push(day)
+  }
+  
+  // Manually validate weeklyDays
+  if (form.value.frequency === 'weekly') {
+    if (weeklyDays.value.length === 0) {
+      setError('weeklyDays', '请至少选择一天')
+    } else {
+      if (errors.value.weeklyDays) delete errors.value.weeklyDays
+    }
   }
 }
 
@@ -380,6 +424,7 @@ watch(() => props.reminder, (reminder) => {
     monthlyTime.value = '08:00'
     autoCreateRecord.value = true
   }
+  clearErrors()
 }, { immediate: true })
 
 const closeModal = () => {
@@ -478,12 +523,34 @@ const prepareSubmitData = () => {
 }
 
 const handleSubmit = async () => {
-  // 验证表单
-  if (!form.value.medicineId) {
-    const { error: showError } = useNotification()
-    showError('请选择药品')
-    return
+  // Manual validation
+  let localIsValid = true
+  clearErrors()
+  
+  const currentRulesObj = rules.value
+  for (const field in currentRulesObj) {
+    const fieldRules = (currentRulesObj as any)[field]
+    // Handle weeklyDays special case
+    let val = form.value[field as keyof typeof form.value]
+    if (field === 'weeklyDays') val = weeklyDays.value as any
+    
+    for (const rule of fieldRules) {
+      const result = rule(val)
+      if (result !== true) {
+        errors.value[field] = typeof result === 'string' ? result : 'Invalid value'
+        localIsValid = false
+        break
+      }
+    }
   }
+  
+  // Validate dosageAmount
+  if (dosageAmount.value <= 0) {
+    setError('dosageAmount', '剂量必须大于0')
+    localIsValid = false
+  }
+  
+  if (!localIsValid) return
   
   // 使用共享组件验证提醒数据
   const reminderData = {
