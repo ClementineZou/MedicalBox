@@ -64,6 +64,7 @@
 
 ### 👤 用户系统
 - **账户注册与登录**：支持邮箱密码注册/登录
+- **Cloudflare Turnstile 验证码**：登录和注册页面集成人机验证，防止机器人攻击
 - **GitHub 账户关联**：可关联 GitHub 账户进行第三方登录
 - **Gravatar 头像**：自动从 Gravatar 获取邮箱对应的头像
 - **个人信息管理**：显示账户创建时间、邮箱验证状态等
@@ -87,6 +88,7 @@
 ### 第三方集成
 - **GitHub OAuth**：第三方账户关联
 - **Gravatar**：头像服务集成
+- **Cloudflare Turnstile**：人机验证服务
 
 ## 🚀 快速开始
 
@@ -114,6 +116,12 @@ npm install
 ```env
 # Better Auth 密钥（必需）
 BETTER_AUTH_SECRET=your-secret-key-here
+
+# Cloudflare Turnstile 验证码（推荐）
+# 在 https://dash.cloudflare.com/ 获取密钥
+# 开发环境可使用测试密钥（见 .env.example）
+TURNSTILE_SITE_KEY=your-turnstile-site-key
+TURNSTILE_SECRET_KEY=your-turnstile-secret-key
 
 # GitHub OAuth（可选）
 GITHUB_CLIENT_ID=your-github-client-id

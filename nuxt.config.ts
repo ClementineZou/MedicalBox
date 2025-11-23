@@ -35,11 +35,13 @@ export default defineNuxtConfig({
     betterAuthUrl: process.env.BETTER_AUTH_URL,
     githubClientId: process.env.GITHUB_CLIENT_ID,
     githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
 
     // Public keys (exposed to client)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
-      githubClientId: process.env.GITHUB_CLIENT_ID
+      githubClientId: process.env.GITHUB_CLIENT_ID,
+      turnstileSiteKey: process.env.TURNSTILE_SITE_KEY
     }
   }
 })

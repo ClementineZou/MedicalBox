@@ -40,10 +40,21 @@
           />
         </div>
 
+        <!-- Turnstile Widget -->
+        <div>
+          <TurnstileWidget
+            ref="turnstileRef"
+            :site-key="turnstileSiteKey"
+            @verified="onTurnstileVerified"
+            @error="onTurnstileError"
+            @expired="onTurnstileExpired"
+          />
+        </div>
+
         <!-- Login Button -->
         <button
           type="submit"
-          :disabled="loading"
+          :disabled="loading || !turnstileToken"
           class="w-full bg-md-primary text-md-on-primary py-3 px-4 rounded-md-md font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-md-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <span v-if="!loading">登录</span>
@@ -98,17 +109,57 @@ const email = ref("");
 const password = ref("");
 const loading = ref(false);
 const error = ref("");
+const turnstileToken = ref("");
+const turnstileRef = ref<any>(null);
+
+// Turnstile site key from environment
+const config = useRuntimeConfig();
+const turnstileSiteKey = config.public.turnstileSiteKey || "0x4AAAAAACCd0MNT1rTL62Am";
+
+const onTurnstileVerified = (token: string) => {
+  turnstileToken.value = token;
+  error.value = "";
+};
+
+const onTurnstileError = (errorMsg: string) => {
+  error.value = errorMsg || "验证码验证失败";
+  turnstileToken.value = "";
+};
+
+const onTurnstileExpired = () => {
+  error.value = "验证码已过期，请重新验证";
+  turnstileToken.value = "";
+};
 
 const handleLogin = async () => {
+  if (!turnstileToken.value) {
+    error.value = "请完成验证码验证";
+    return;
+  }
+
   loading.value = true;
   error.value = "";
   
   try {
-    await login(email.value, password.value);
-    // Redirect to home page after successful login
+    // 使用 fetch 直接调用 API，因为需要传递 turnstile token
+    const response = await $fetch('/api/auth/sign-in/email', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value,
+        turnstileToken: turnstileToken.value,
+      },
+    });
+
+    // 登录成功后重定向
     router.push("/");
   } catch (e: any) {
-    error.value = e.message || "登录失败，请检查你的邮箱和密码";
+    error.value = e.data?.message || e.message || "登录失败，请检查你的邮箱和密码";
+    // 重置 Turnstile
+    if (turnstileRef.value) {
+      turnstileRef.value.reset();
+    }
+    turnstileToken.value = "";
   } finally {
     loading.value = false;
   }

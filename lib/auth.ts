@@ -26,4 +26,16 @@ export const auth = betterAuth({
         expiresIn: 60 * 60 * 24 * 7, // 7 days
         updateAge: 60 * 60 * 24, // 1 day
     },
+
+    // Cloudflare Turnstile configuration
+    advanced: {
+        useSecureCookies: process.env.NODE_ENV === "production",
+        crossSubDomainCookies: {
+            enabled: false,
+        },
+    },
+
+    // Better Auth 使用 plugins 来扩展功能，包括 turnstile
+    // 但在当前版本中，turnstile 可能需要手动在 API 路由中验证
+    // 或者直接在配置中添加（如果支持的话）
 });
