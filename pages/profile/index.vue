@@ -62,9 +62,24 @@
         </div>
       </div>
 
-      <!-- Change Password Card -->
+      <!-- Password Management Card -->
       <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">修改密码</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+          {{ hasPassword ? '修改密码' : '设置密码' }}
+        </h2>
+        
+        <!-- Info message for GitHub users without password -->
+        <div v-if="!hasPassword && !passwordCheckLoading" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="text-blue-700 text-sm font-medium">您当前使用第三方账户登录</p>
+              <p class="text-blue-600 text-sm mt-1">设置密码后，您可以使用邮箱和密码直接登录系统</p>
+            </div>
+          </div>
+        </div>
         
         <div v-if="passwordSuccess" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
           <p class="text-green-700 text-sm">{{ passwordSuccess }}</p>
@@ -74,7 +89,58 @@
           <p class="text-red-700 text-sm">{{ passwordError }}</p>
         </div>
 
-        <form @submit.prevent="handleChangePassword" class="space-y-4">
+        <!-- Loading state -->
+        <div v-if="passwordCheckLoading" class="text-center py-8">
+          <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p class="text-gray-600 mt-2">加载中...</p>
+        </div>
+
+        <!-- Set Password Form (for users without password) -->
+        <form v-else-if="!hasPassword" @submit.prevent="handleSetPassword" class="space-y-4">
+          <div>
+            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">
+              新密码
+            </label>
+            <input
+              id="newPassword"
+              v-model="newPassword"
+              type="password"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="至少8个字符"
+            />
+          </div>
+
+          <div>
+            <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-2">
+              确认新密码
+            </label>
+            <input
+              id="confirmNewPassword"
+              v-model="confirmNewPassword"
+              type="password"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="再次输入新密码"
+            />
+            <p v-if="confirmNewPassword && newPassword !== confirmNewPassword" class="mt-2 text-sm text-red-600">
+              密码不匹配
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            :disabled="passwordLoading || (!!confirmNewPassword && newPassword !== confirmNewPassword)"
+            class="bg-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <span v-if="!passwordLoading">设置密码</span>
+            <span v-else>设置中...</span>
+          </button>
+        </form>
+
+        <!-- Change Password Form (for users with password) -->
+        <form v-else @submit.prevent="handleChangePassword" class="space-y-4">
           <div>
             <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-2">
               当前密码
@@ -215,6 +281,8 @@ const showDeleteDialog = ref(false);
 const linkedAccounts = ref<any[]>([]);
 const accountsLoading = ref(true);
 const deleteDialogRef = ref<any>(null);
+const hasPassword = ref(false);
+const passwordCheckLoading = ref(true);
 
 // Gravatar support
 const userEmail = computed(() => user.value?.email);
@@ -276,6 +344,59 @@ const handleChangePassword = async () => {
     passwordError.value = e.data?.statusMessage || e.message || "密码更新失败";
   } finally {
     passwordLoading.value = false;
+  }
+};
+
+const handleSetPassword = async () => {
+  if (newPassword.value !== confirmNewPassword.value) {
+    passwordError.value = "新密码不匹配";
+    return;
+  }
+  
+  passwordLoading.value = true;
+  passwordSuccess.value = "";
+  passwordError.value = "";
+  
+  try {
+    const response = await $fetch('/api/user/set-password', {
+      method: 'POST',
+      body: {
+        newPassword: newPassword.value,
+      }
+    });
+    
+    if ((response as any).success) {
+      passwordSuccess.value = "密码已成功设置，您现在可以使用邮箱和密码登录";
+      newPassword.value = "";
+      confirmNewPassword.value = "";
+      hasPassword.value = true; // Update state to show change password form
+      
+      // Show success notification
+      const { success } = useNotification();
+      success('密码已成功设置');
+    } else {
+      passwordError.value = (response as any).message || "密码设置失败";
+    }
+  } catch (e: any) {
+    passwordError.value = e.data?.statusMessage || e.message || "密码设置失败";
+  } finally {
+    passwordLoading.value = false;
+  }
+};
+
+const checkHasPassword = async () => {
+  passwordCheckLoading.value = true;
+  try {
+    const response = await $fetch('/api/user/has-password');
+    if ((response as any).success) {
+      hasPassword.value = (response as any).hasPassword;
+    }
+  } catch (e: any) {
+    console.error('Failed to check password status:', e);
+    // Default to showing change password form on error
+    hasPassword.value = true;
+  } finally {
+    passwordCheckLoading.value = false;
   }
 };
 
@@ -350,6 +471,7 @@ const handleDeleteAccount = async (password: string) => {
 // Load linked accounts on mount
 onMounted(() => {
   loadLinkedAccounts();
+  checkHasPassword();
 });
 
 // Redirect if not logged in
