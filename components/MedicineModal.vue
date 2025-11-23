@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 9999;">
-      <div class="bg-white rounded-md-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+      <div class="bg-white rounded-md-lg max-w-2xl w-full max-h-[90vh] shadow-xl flex flex-col">
       <!-- Header -->
       <div class="bg-md-primary text-md-on-primary px-6 py-4 rounded-t-md-lg flex justify-between items-center sticky top-0">
         <h2 class="text-2xl font-bold">{{ isEdit ? '编辑药品' : '添加药品' }}</h2>
@@ -11,7 +11,7 @@
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
+      <form @submit.prevent="handleSubmit" class="p-6 space-y-4 overflow-y-auto flex-1">
         <div class="grid md:grid-cols-2 gap-4">
           <!-- 药品通用名 -->
           <div>
@@ -39,20 +39,6 @@
               @blur="validateField('brand', form.brand)"
             >
             <p v-if="errors.brand" class="text-red-500 text-xs mt-1">{{ errors.brand }}</p>
-          </div>
-
-          <!-- 批准文号 (单独一行) -->
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1">批准文号 <span class="text-red-500">*</span></label>
-            <input 
-              v-model="form.approvalNo" 
-              type="text"
-              class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
-              :class="errors.approvalNo ? 'border-red-500' : 'border-md-surface-variant'"
-              placeholder="例如：国药准字H12345678"
-              @blur="validateField('approvalNo', form.approvalNo)"
-            >
-            <p v-if="errors.approvalNo" class="text-red-500 text-xs mt-1">{{ errors.approvalNo }}</p>
           </div>
           
           <!-- 用途分类 -->
@@ -489,7 +475,6 @@ const form = ref({
   usage: '',
   expiryDate: '',
   location: '',
-  approvalNo: '',
   notes: ''
 })
 
@@ -503,8 +488,7 @@ const rules = {
   indications: [validators.required()],
   usage: [validators.required()],
   expiryDate: [validators.required()],
-  location: [validators.required()],
-  approvalNo: [validators.required()]
+  location: [validators.required()]
 }
 
 const { errors, validateField, validateForm, clearErrors, setError } = useFormValidation(form.value, rules)
@@ -525,7 +509,6 @@ watch(() => props.medicine, (medicine) => {
       usage: medicine.usage || '',
       expiryDate: toLocalDateString(new Date(medicine.expiryDate)),
       location: medicine.location || '',
-      approvalNo: medicine.approvalNo || '',
       notes: medicine.notes || ''
     }
     
@@ -546,7 +529,6 @@ watch(() => props.medicine, (medicine) => {
       usage: '',
       expiryDate: '',
       location: '',
-      approvalNo: '',
       notes: ''
     }
     selectedControlTypes.value = []

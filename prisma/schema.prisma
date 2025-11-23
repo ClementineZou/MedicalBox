@@ -93,7 +93,7 @@ model Medicine {
   usage       String?  // 用法用量
   notes       String?  // 备注
   expiryDate  DateTime // 有效期
-  approvalNo  String   // 批准文号，必填
+  approvalNo  String?  // 批准文号，可选
   location    String?  // 存放位置
   imageUrl    String?  // 药品图片
   createdAt   DateTime @default(now())

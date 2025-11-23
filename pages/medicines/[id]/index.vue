@@ -46,16 +46,20 @@
             <p class="font-medium">{{ medicine.category || '-' }}</p>
           </div>
           <div>
-            <p class="text-sm text-md-on-surface-variant">批准文号</p>
-            <p class="font-medium">{{ medicine.approvalNo || '-' }}</p>
-          </div>
-          <div>
             <p class="text-sm text-md-on-surface-variant">剂量规格</p>
             <p class="font-medium">{{ medicine.dosage }}{{ medicine.dosageUnit }}</p>
           </div>
           <div>
+            <p class="text-sm text-md-on-surface-variant">管制分类</p>
+            <p class="font-medium">{{ medicine.controlTypes || '-' }}</p>
+          </div>
+          <div>
             <p class="text-sm text-md-on-surface-variant">库存数量</p>
             <p class="font-medium">{{ medicine.quantity }} {{ medicine.quantityUnit }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-md-on-surface-variant">存放位置</p>
+            <p class="font-medium">{{ medicine.location || '-' }}</p>
           </div>
           <div>
             <p class="text-sm text-md-on-surface-variant">有效期至</p>
@@ -63,14 +67,6 @@
               {{ formatDate(medicine.expiryDate) }}
               <span v-if="isExpiringSoon(medicine.expiryDate)" class="text-xs">(即将过期)</span>
             </p>
-          </div>
-          <div>
-            <p class="text-sm text-md-on-surface-variant">存放位置</p>
-            <p class="font-medium">{{ medicine.location || '-' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-md-on-surface-variant">管制分类</p>
-            <p class="font-medium">{{ medicine.controlTypes || '-' }}</p>
           </div>
         </div>
       </div>

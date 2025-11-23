@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    if (!body.name || !body.brand || !body.dosage || !body.dosageUnit || !body.quantityUnit || !body.approvalNo) {
+    if (!body.name || !body.brand || !body.dosage || !body.dosageUnit || !body.quantityUnit) {
       return { success: false, error: '请填写所有必填项' }
     }
     // First check if medicine exists and belongs to user
@@ -41,7 +41,6 @@ export default defineEventHandler(async (event) => {
         quantityUnit: body.quantityUnit,
         indications: body.indications,
         usage: body.usage,
-        approvalNo: body.approvalNo,
         expiryDate: body.expiryDate ? new Date(body.expiryDate) : undefined,
         location: body.location,
         imageUrl: body.imageUrl,
