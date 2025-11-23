@@ -1,6 +1,7 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-md-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+  <Teleport to="body">
+    <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 9999;">
+      <div class="bg-white rounded-md-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
       <!-- Header -->
       <div class="bg-md-primary text-md-on-primary px-6 py-4 rounded-t-md-lg flex justify-between items-center">
         <h2 class="text-2xl font-bold">{{ isEdit ? '编辑用药记录' : '添加用药记录' }}</h2>
@@ -190,7 +191,8 @@
         </div>
       </form>
     </div>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

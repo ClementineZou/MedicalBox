@@ -1,9 +1,17 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-md-lg w-full max-w-2xl p-6">
-      <h2 class="text-2xl font-bold mb-4">{{ vitalSign ? '编辑生命体征记录' : '新增生命体征记录' }}</h2>
+  <Teleport to="body">
+    <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 9999;">
+      <div class="bg-white rounded-md-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+        <!-- Header -->
+        <div class="bg-md-primary text-md-on-primary px-6 py-4 rounded-t-md-lg flex justify-between items-center sticky top-0">
+          <h2 class="text-2xl font-bold">{{ vitalSign ? '编辑生命体征记录' : '新增生命体征记录' }}</h2>
+          <button @click="close" class="text-md-on-primary hover:opacity-80">
+            <span class="text-2xl">&times;</span>
+          </button>
+        </div>
       
-      <form @submit.prevent="submit" class="space-y-4">
+        <!-- Form -->
+        <form @submit.prevent="submit" class="p-6 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- 体征类型 -->
           <div class="md:col-span-2">
@@ -17,6 +25,7 @@
             >
               <option value="height">身高</option>
               <option value="weight">体重</option>
+              <option value="bmi" disabled>BMI（自动计算）</option>
               <option value="temperature">体温</option>
               <option value="bloodPressure">血压</option>
               <option value="bloodOxygen">血氧</option>
@@ -138,7 +147,8 @@
         </div>
       </form>
     </div>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -278,6 +288,8 @@ const getUnitsForType = (type: string): string[] => {
       return ['cm', 'm']
     case 'weight':
       return ['kg', 'g', 'lb']
+    case 'bmi':
+      return ['']
     case 'temperature':
       return ['°C', '°F']
     case 'bloodPressure':

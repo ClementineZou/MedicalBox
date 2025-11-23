@@ -172,10 +172,10 @@
           <div>
             <h3 class="font-medium text-gray-900 mb-2">删除账户</h3>
             <p class="text-sm text-gray-600 mb-4">
-              删除你的账户将永久删除所有数据，此操作不可恢复。
+              删除你的账户将永久删除所有数据，包括药品信息、用药记录、生命体征记录等。此操作不可恢复。
             </p>
             <button
-              @click="showDeleteConfirm = true"
+              @click="showDeleteDialog = true"
               class="bg-red-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all"
             >
               删除账户
@@ -184,29 +184,12 @@
         </div>
       </div>
 
-      <!-- Delete Confirmation Modal -->
-      <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full">
-          <h3 class="text-xl font-semibold text-gray-900 mb-4">确认删除账户？</h3>
-          <p class="text-gray-600 mb-6">
-            此操作将永久删除你的账户和所有数据。你确定要继续吗？
-          </p>
-          <div class="flex space-x-4">
-            <button
-              @click="showDeleteConfirm = false"
-              class="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-xl font-medium hover:bg-gray-300 transition-all"
-            >
-              取消
-            </button>
-            <button
-              @click="handleDeleteAccount"
-              class="flex-1 bg-red-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-red-700 transition-all"
-            >
-              确认删除
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Delete Account Dialog -->
+      <DeleteAccountDialog 
+        v-model="showDeleteDialog" 
+        @confirm="handleDeleteAccount"
+        ref="deleteDialogRef"
+      />
     </div>
   </div>
 </template>
@@ -214,7 +197,12 @@
 <script setup lang="ts">
 import { authClient } from "~/lib/auth-client";
 
-const { user, logout } = useAuth();
+// 设置页面标题
+useHead({
+  title: '账户中心'
+});
+
+const { user, logout, deleteAccount } = useAuth();
 const router = useRouter();
 
 const currentPassword = ref("");
@@ -223,9 +211,10 @@ const confirmNewPassword = ref("");
 const passwordLoading = ref(false);
 const passwordSuccess = ref("");
 const passwordError = ref("");
-const showDeleteConfirm = ref(false);
+const showDeleteDialog = ref(false);
 const linkedAccounts = ref<any[]>([]);
 const accountsLoading = ref(true);
+const deleteDialogRef = ref<any>(null);
 
 // Gravatar support
 const userEmail = computed(() => user.value?.email);
@@ -263,18 +252,28 @@ const handleChangePassword = async () => {
   passwordError.value = "";
   
   try {
-    // TODO: Implement password change API call
-    // await authClient.changePassword({
-    //   currentPassword: currentPassword.value,
-    //   newPassword: newPassword.value,
-    // });
+    const response = await $fetch('/api/user/change-password', {
+      method: 'POST',
+      body: {
+        currentPassword: currentPassword.value,
+        newPassword: newPassword.value,
+      }
+    });
     
-    passwordSuccess.value = "密码已成功更新";
-    currentPassword.value = "";
-    newPassword.value = "";
-    confirmNewPassword.value = "";
+    if ((response as any).success) {
+      passwordSuccess.value = "密码已成功更新";
+      currentPassword.value = "";
+      newPassword.value = "";
+      confirmNewPassword.value = "";
+      
+      // Show success notification
+      const { success } = useNotification();
+      success('密码已成功更新');
+    } else {
+      passwordError.value = (response as any).message || "密码更新失败";
+    }
   } catch (e: any) {
-    passwordError.value = e.message || "密码更新失败";
+    passwordError.value = e.data?.statusMessage || e.message || "密码更新失败";
   } finally {
     passwordLoading.value = false;
   }
@@ -322,16 +321,29 @@ const handleConnectGithub = async () => {
   }
 };
 
-const handleDeleteAccount = async () => {
+const handleDeleteAccount = async (password: string) => {
+  if (!deleteDialogRef.value) return;
+  
   try {
-    // TODO: Implement account deletion
-    // await authClient.deleteAccount();
+    deleteDialogRef.value.setLoading(true);
+    deleteDialogRef.value.setError('');
     
-    await logout();
-    router.push("/");
+    await deleteAccount(password);
+    
+    // Show success notification
+    const { success } = useNotification();
+    success('账户已成功删除');
+    
+    // Close dialog
+    showDeleteDialog.value = false;
+    
+    // Redirect to home page
+    await navigateTo('/');
   } catch (e: any) {
-    alert("删除失败: " + e.message);
-    showDeleteConfirm.value = false;
+    console.error("删除账户失败:", e);
+    deleteDialogRef.value.setError(e.message || '删除账户失败，请重试');
+  } finally {
+    deleteDialogRef.value.setLoading(false);
   }
 };
 

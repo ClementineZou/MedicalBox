@@ -1,6 +1,7 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-md-lg max-w-md w-full shadow-xl p-6 space-y-4">
+  <Teleport to="body">
+    <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 9999;">
+      <div class="bg-white rounded-md-lg max-w-md w-full shadow-xl p-6 space-y-4">
       <h2 class="text-xl font-semibold">{{ title }}</h2>
       <p>{{ message }}</p>
       <div class="flex gap-3 justify-end">
@@ -18,7 +19,8 @@
         </button>
       </div>
     </div>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

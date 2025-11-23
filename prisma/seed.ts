@@ -61,6 +61,14 @@ async function main() {
       unit: 'mmol/L',
       description: '餐后2小时血糖正常范围',
       isSystem: true,
+    },
+    {
+      type: 'bmi',
+      minValue: 18.5,
+      maxValue: 23.9,
+      unit: '',
+      description: 'BMI正常范围（中国成人标准）',
+      isSystem: true,
     }
   ]
 

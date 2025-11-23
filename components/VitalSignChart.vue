@@ -75,6 +75,7 @@ const chartData = computed(() => {
     const labelMap: Record<string, string> = {
       height: '身高',
       weight: '体重',
+      bmi: 'BMI',
       temperature: '体温',
       heartRate: '心率',
       bloodOxygen: '血氧',

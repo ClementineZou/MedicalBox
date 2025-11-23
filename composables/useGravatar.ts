@@ -22,7 +22,6 @@ export function useGravatar(email: Ref<string | undefined> | string | undefined,
         }
       })
       gravatarUrl.value = (response as any).url
-      console.log('Gravatar loaded for:', emailValue.value, 'URL:', gravatarUrl.value)
     } catch (error) {
       console.error('Failed to load Gravatar:', error)
       gravatarUrl.value = `https://www.gravatar.com/avatar/?s=${size}&d=identicon`

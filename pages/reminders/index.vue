@@ -20,7 +20,7 @@
       <h2 class="text-xl font-semibold mb-4">今日提醒</h2>
       <div v-if="todayReminders.length === 0" class="text-center text-md-on-surface-variant py-12">
         <div class="text-6xl mb-4">⏰</div>
-        <p class="text-lg">暂无今日提醒</p>
+        <p class="text-lg font-semibold mb-2">暂无今日提醒</p>
         <p class="text-sm mt-2">设置用药提醒，确保按时服药</p>
       </div>
       <div v-else class="space-y-3">

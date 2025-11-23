@@ -1,5 +1,20 @@
 import prisma from '~/server/utils/prisma'
 
+// 当删除身高或体重记录后，删除对应时间点的 BMI 记录
+async function deleteBMIForMeasureTime(userId: string, measureTime: Date) {
+  try {
+    await prisma.vitalSign.deleteMany({
+      where: {
+        userId,
+        type: 'bmi',
+        measureTime
+      }
+    })
+  } catch (error) {
+    console.error('Error deleting BMI records:', error)
+  }
+}
+
 export default defineEventHandler(async (event) => {
   try {
     const userId = await requireUserId(event)
@@ -28,6 +43,11 @@ export default defineEventHandler(async (event) => {
     await prisma.vitalSign.delete({
       where: { id }
     })
+    
+    // 如果删除的是身高或体重，删除对应时间点的 BMI 记录
+    if (existing.type === 'height' || existing.type === 'weight') {
+      await deleteBMIForMeasureTime(userId, existing.measureTime)
+    }
 
     return {
       success: true,

@@ -4,23 +4,23 @@
       <h1 class="text-3xl font-bold">健康监测</h1>
       <div class="flex flex-col sm:flex-row gap-3">
         <button 
-          v-if="filteredVitalsData.length > 0"
+          v-if="vitalsData.length > 0"
           @click="exportToPDF"
-          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
           ↓ 导出PDF
+        </button>
+        <button 
+          @click="openAddReminderModal"
+          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+        >
+          + 添加监测提醒
         </button>
         <button 
           @click="openAddModal"
           class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
           + 添加监测记录
-        </button>
-        <button 
-          @click="openAddReminderModal"
-          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
-        >
-          + 添加监测提醒
         </button>
       </div>
     </div>
@@ -37,6 +37,7 @@
             <option value="">全部类型</option>
             <option value="height">身高</option>
             <option value="weight">体重</option>
+            <option value="bmi">BMI</option>
             <option value="temperature">体温</option>
             <option value="bloodPressure">血压</option>
             <option value="bloodOxygen">血氧</option>
@@ -76,14 +77,25 @@
       <p>加载中...</p>
     </div>
 
-    <!-- 图表展示 (Always show if type selected) -->
-    <div v-if="!loading && filters.type" ref="chartContainer" class="bg-white rounded-md-lg shadow-md p-6">
+    <!-- 图表展示 (只在选择了类型且有数据时显示) -->
+    <div v-if="!loading && filters.type && filteredVitalsData.length > 0" ref="chartContainer" class="bg-white rounded-md-lg shadow-md p-6">
       <h2 class="text-xl font-semibold mb-4">趋势分析</h2>
       <VitalSignChart 
         :data="filteredVitalsData" 
         :reference-range="selectedReferenceRange"
         :type="filters.type"
       />
+      <!-- 参考范围信息 -->
+      <div v-if="selectedReferenceRange" class="mt-4 text-sm text-gray-600">
+        <span v-if="filters.type === 'bloodPressure' && bloodPressureDiastolicRange">
+          {{ getReferenceLabel(filters.type) }}：
+          收缩压 {{ selectedReferenceRange.minValue }}-{{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}，
+          舒张压 {{ bloodPressureDiastolicRange.minValue }}-{{ bloodPressureDiastolicRange.maxValue }} {{ bloodPressureDiastolicRange.unit }}
+        </span>
+        <span v-else>
+          {{ getReferenceLabel(filters.type) }}：{{ selectedReferenceRange.minValue }}-{{ selectedReferenceRange.maxValue }} {{ selectedReferenceRange.unit }}
+        </span>
+      </div>
     </div>
 
     <div v-if="!loading && vitalsData.length === 0" class="bg-white rounded-md-lg shadow-md p-16 text-center">
@@ -93,7 +105,10 @@
     </div>
 
     <div v-else-if="!loading" class="bg-white rounded-md-lg shadow-md p-6">
-      <h2 class="text-xl font-semibold mb-4">监测记录</h2>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">监测记录</h2>
+        <span class="text-sm text-gray-500">共 {{ vitalsData.length }} 条记录</span>
+      </div>
       
       <!-- 数据表格 -->
       <div class="overflow-x-auto">
@@ -136,11 +151,19 @@
               <td class="py-4 px-4 text-right">
                 <div class="flex justify-end gap-2">
                   <button 
+                    v-if="vitalSign.type !== 'bmi'"
                     @click="openEditModal(vitalSign)"
                     class="bg-md-secondary text-md-on-secondary px-3 py-1 rounded-md-sm text-xs hover:opacity-90 transition-opacity"
                   >
                     编辑
                   </button>
+                  <span 
+                    v-else
+                    class="text-xs text-gray-500 px-3 py-1"
+                    title="BMI 由系统自动计算，不可编辑"
+                  >
+                    自动计算
+                  </span>
                   <button 
                     @click="deleteVitalSign(vitalSign.id)"
                     class="bg-md-error text-md-on-error px-3 py-1 rounded-md-sm text-xs hover:opacity-90 transition-opacity"
@@ -285,6 +308,14 @@ const selectedReferenceRange = computed(() => {
   return referenceRanges.value.find((r: VitalSignReferenceRange) => r.type === filters.type)
 })
 
+// 获取血压的舒张压参考范围
+const bloodPressureDiastolicRange = computed(() => {
+  if (filters.type !== 'bloodPressure') return undefined
+  // 血压有两条记录，第一条是收缩压，第二条是舒张压
+  const ranges = referenceRanges.value.filter((r: VitalSignReferenceRange) => r.type === 'bloodPressure')
+  return ranges.length > 1 ? ranges[1] : undefined
+})
+
 // 过滤后的体征数据，用于图表显示，防止显示其他类型的数据
 const filteredVitalsData = computed(() => {
   if (!filters.type) return []
@@ -296,6 +327,7 @@ const getVitalSignTypeName = (type: string): string => {
   const typeMap: Record<string, string> = {
     'height': '身高',
     'weight': '体重',
+    'bmi': 'BMI',
     'temperature': '体温',
     'bloodPressure': '血压',
     'bloodOxygen': '血氧',
@@ -310,6 +342,7 @@ const getReferenceLabel = (type: string): string => {
   const labelMap: Record<string, string> = {
     'height': '身高参考范围',
     'weight': '体重参考范围',
+    'bmi': 'BMI参考范围',
     'temperature': '体温参考范围',
     'bloodPressure': '血压参考范围',
     'bloodOxygen': '血氧参考范围',
@@ -324,6 +357,7 @@ const getVitalSignTypeIcon = (type: string): string => {
   const iconMap: Record<string, string> = {
     'height': '📏',
     'weight': '⚖️',
+    'bmi': '📊',
     'temperature': '🌡️',
     'bloodPressure': '💉',
     'bloodOxygen': '🫁',
@@ -481,8 +515,11 @@ const exportToPDF = async () => {
   const { success, error: showError } = useNotification()
   
   try {
+    // 如果没有选择类型，导出全部数据；否则只导出筛选后的数据
+    const dataToExport = filters.type ? filteredVitalsData.value : vitalsData.value
+    
     await exportVitalSignsToPDF(
-      filteredVitalsData.value,
+      dataToExport,
       {
         type: filters.type || undefined,
         dateFrom: filters.dateFrom || undefined,

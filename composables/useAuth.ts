@@ -43,6 +43,26 @@ export const useAuth = () => {
         });
     };
 
+    const deleteAccount = async (password: string) => {
+        try {
+            const response = await $fetch('/api/user/delete-account', {
+                method: 'DELETE',
+                body: { password }
+            });
+
+            if (!(response as any).success) {
+                throw new Error((response as any).error || '删除账户失败');
+            }
+
+            // Sign out after successful deletion
+            await authClient.signOut();
+            
+            return response;
+        } catch (error: any) {
+            throw new Error(error.message || '删除账户失败');
+        }
+    };
+
     return {
         session,
         user: computed(() => session.value?.data?.user),
@@ -52,5 +72,6 @@ export const useAuth = () => {
         register,
         logout,
         loginWithGithub,
+        deleteAccount,
     };
 };

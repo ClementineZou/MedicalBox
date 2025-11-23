@@ -1,6 +1,7 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-md-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+  <Teleport to="body">
+    <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style="z-index: 9999;">
+      <div class="bg-white rounded-md-lg max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
       <!-- Header -->
       <div class="bg-md-primary text-md-on-primary px-6 py-4 rounded-t-md-lg flex justify-between items-center">
         <h2 class="text-2xl font-bold">{{ reminder ? '编辑体征监测提醒' : '新增体征监测提醒' }}</h2>
@@ -22,6 +23,7 @@
           >
             <option value="height">身高</option>
             <option value="weight">体重</option>
+            <option value="bmi" disabled>BMI（自动计算）</option>
             <option value="temperature">体温</option>
             <option value="bloodPressure">血压</option>
             <option value="bloodOxygen">血氧</option>
@@ -183,7 +185,8 @@
         </div>
       </form>
     </div>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -335,6 +338,7 @@ const prepareSubmitData = () => {
   const typeNameMap: Record<string, string> = {
     height: '身高',
     weight: '体重',
+    bmi: 'BMI',
     temperature: '体温',
     bloodPressure: '血压',
     bloodOxygen: '血氧',

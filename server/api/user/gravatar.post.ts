@@ -20,13 +20,6 @@ export default defineEventHandler(async (event) => {
       .digest('hex')
 
     const url = `https://www.gravatar.com/avatar/${hash}?s=${size}&d=${defaultImage}`
-    
-    console.log('Gravatar generated:', { 
-      originalEmail: email,
-      normalizedEmail, 
-      hash, 
-      url 
-    })
 
     return {
       success: true,

@@ -229,6 +229,7 @@ export const exportVitalSignsToPDF = async (
       const typeNames: Record<string, string> = {
         height: '身高',
         weight: '体重',
+        bmi: 'BMI',
         temperature: '体温',
         bloodPressure: '血压',
         bloodOxygen: '血氧',
@@ -270,6 +271,7 @@ export const exportVitalSignsToPDF = async (
   const typeNames: Record<string, string> = {
     height: '身高',
     weight: '体重',
+    bmi: 'BMI',
     temperature: '体温',
     bloodPressure: '血压',
     bloodOxygen: '血氧',
