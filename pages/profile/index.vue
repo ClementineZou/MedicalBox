@@ -202,7 +202,14 @@
       <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-6">关联账户</h2>
         
-        <div class="space-y-4">
+        <!-- Loading state -->
+        <div v-if="accountsLoading" class="text-center py-8">
+          <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p class="text-gray-600 mt-2">加载中...</p>
+        </div>
+        
+        <div v-else class="space-y-4">
+          <!-- GitHub Account -->
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
             <div class="flex items-center space-x-3">
               <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -210,22 +217,39 @@
               </svg>
               <div>
                 <p class="font-medium text-gray-900">GitHub</p>
-                <p class="text-sm text-gray-600">关联你的GitHub账户</p>
+                <p class="text-sm text-gray-600">
+                  <template v-if="githubAccount">
+                    已关联 · {{ formatDate(githubAccount.createdAt) }}
+                  </template>
+                  <template v-else>
+                    关联你的GitHub账户
+                  </template>
+                </p>
               </div>
             </div>
-            <button 
-              v-if="!isGithubLinked"
-              @click="handleConnectGithub"
-              class="text-blue-600 hover:text-blue-700 font-medium text-sm"
-            >
-              关联
-            </button>
-            <span v-else class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-              </svg>
-              已关联
-            </span>
+            <div v-if="!githubAccount">
+              <button 
+                @click="handleConnectGithub"
+                class="text-blue-600 hover:text-blue-700 font-medium text-sm"
+              >
+                关联
+              </button>
+            </div>
+            <div v-else class="flex items-center space-x-2">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                已关联
+              </span>
+              <button
+                @click="handleUnlinkAccount(githubAccount.id, 'github')"
+                class="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-1 hover:bg-red-50 rounded-lg transition-colors"
+                title="解绑GitHub账户"
+              >
+                解绑
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -256,6 +280,16 @@
         @confirm="handleDeleteAccount"
         ref="deleteDialogRef"
       />
+
+      <!-- Unlink Account Dialog -->
+      <UnlinkAccountDialog
+        v-model="showUnlinkDialog"
+        :accountId="accountToUnlink?.id || ''"
+        :providerId="accountToUnlink?.providerId || ''"
+        :hasPassword="hasPassword"
+        @confirm="confirmUnlinkAccount"
+        ref="unlinkDialogRef"
+      />
     </div>
   </div>
 </template>
@@ -283,6 +317,9 @@ const accountsLoading = ref(true);
 const deleteDialogRef = ref<any>(null);
 const hasPassword = ref(false);
 const passwordCheckLoading = ref(true);
+const showUnlinkDialog = ref(false);
+const accountToUnlink = ref<any>(null);
+const unlinkDialogRef = ref<any>(null);
 
 // Gravatar support
 const userEmail = computed(() => user.value?.email);
@@ -422,6 +459,10 @@ const isGithubLinked = computed(() => {
   return linkedAccounts.value.some(acc => acc.providerId === 'github');
 });
 
+const githubAccount = computed(() => {
+  return linkedAccounts.value.find(acc => acc.providerId === 'github');
+});
+
 const handleConnectGithub = async () => {
   try {
     // Get GitHub client ID from runtime config or env
@@ -465,6 +506,47 @@ const handleDeleteAccount = async (password: string) => {
     deleteDialogRef.value.setError(e.message || '删除账户失败，请重试');
   } finally {
     deleteDialogRef.value.setLoading(false);
+  }
+};
+
+const handleUnlinkAccount = (accountId: string, providerId: string) => {
+  accountToUnlink.value = { id: accountId, providerId };
+  showUnlinkDialog.value = true;
+};
+
+const confirmUnlinkAccount = async () => {
+  if (!unlinkDialogRef.value || !accountToUnlink.value) return;
+  
+  try {
+    unlinkDialogRef.value.setLoading(true);
+    unlinkDialogRef.value.setError('');
+    
+    const response = await $fetch('/api/user/unlink-account', {
+      method: 'DELETE',
+      body: {
+        accountId: accountToUnlink.value.id
+      }
+    });
+    
+    if ((response as any).success) {
+      // Show success notification
+      const { success } = useNotification();
+      success('账户已成功解绑');
+      
+      // Close dialog
+      showUnlinkDialog.value = false;
+      accountToUnlink.value = null;
+      
+      // Reload linked accounts
+      await loadLinkedAccounts();
+    } else {
+      unlinkDialogRef.value.setError((response as any).error || '解绑失败，请重试');
+    }
+  } catch (e: any) {
+    console.error("解绑账户失败:", e);
+    unlinkDialogRef.value.setError(e.data?.error || e.message || '解绑失败，请重试');
+  } finally {
+    unlinkDialogRef.value.setLoading(false);
   }
 };
 
