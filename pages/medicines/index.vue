@@ -103,7 +103,7 @@
     <div v-else-if="medicines.length === 0" class="bg-white rounded-md-lg shadow-md p-6">
       <div class="text-center text-md-on-surface-variant py-12">
         <div class="text-6xl mb-4">💊</div>
-        <p class="text-lg">暂无药品信息</p>
+        <p class="text-lg font-semibold mb-2">暂无药品信息</p>
         <p class="text-sm mt-2">点击上方"添加药品"按钮开始记录</p>
       </div>
     </div>

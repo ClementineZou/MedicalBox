@@ -9,17 +9,12 @@ export const auth = betterAuth({
         provider: "sqlite",
     }),
 
+    secret: process.env.BETTER_AUTH_SECRET || "75740947d1dd09d67820899225b362d7",
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false, // Set to true if you want email verification
-    },
-
-    socialProviders: {
-        github: {
-            clientId: process.env.GITHUB_CLIENT_ID as string,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-            enabled: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
-        },
     },
 
     session: {

@@ -36,13 +36,6 @@ export const useAuth = () => {
         navigateTo("/");
     };
 
-    const loginWithGithub = async () => {
-        await authClient.signIn.social({
-            provider: "github",
-            callbackURL: "/",
-        });
-    };
-
     const deleteAccount = async (password: string) => {
         try {
             const response = await $fetch('/api/user/delete-account', {
@@ -71,7 +64,6 @@ export const useAuth = () => {
         login,
         register,
         logout,
-        loginWithGithub,
         deleteAccount,
     };
 };

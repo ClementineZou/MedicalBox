@@ -69,7 +69,6 @@
 ### 👤 用户系统
 - **账户注册与登录**：支持邮箱密码注册/登录
 - **Cloudflare Turnstile 验证码**：登录和注册页面集成人机验证，防止机器人攻击
-- **GitHub 账户关联**：可关联 GitHub 账户进行第三方登录
 - **Gravatar 头像**：自动从 Gravatar 获取邮箱对应的头像
 - **个人信息管理**：显示账户创建时间、邮箱验证状态等
 - **密码修改**：支持修改账户密码
@@ -100,7 +99,6 @@
 ### 第三方集成
 - **Google Analytics**：网站分析（支持 Consent Mode v2）
 - **Cloudflare Turnstile**：人机验证服务
-- **GitHub OAuth**：第三方账户关联
 - **Gravatar**：头像服务集成
 
 ## 🚀 快速开始
@@ -133,10 +131,6 @@ BETTER_AUTH_SECRET=your-secret-key-here
 # Cloudflare Turnstile 验证码（推荐）
 TURNSTILE_SITE_KEY=your-turnstile-site-key
 TURNSTILE_SECRET_KEY=your-turnstile-secret-key
-
-# GitHub OAuth（可选）
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
 
 # Google Analytics（可选）
 GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
@@ -180,27 +174,16 @@ npm run start
 1. 访问注册页面创建账户
 2. 登录后进入药品管理页面
 3. 添加家中的药品信息
-4. **导出药品标签**（可选）：
-   - 点击"🏷️ 导出标签"按钮进入标签模式
-   - 选择需要打印标签的药品（或点击"全选"）
-   - 点击"🖨️ 打印标签"按钮
-   - 在打印预览中选择打印或保存为PDF
-   - 打印后剪裁标签，贴在相应的药盒上
-5. 设置用药提醒
-6. **启用通知权限**：在提醒页面或应用提示下授予浏览器通知权限
-7. 记录每次用药情况
-8. 定期记录健康数据
+4. 设置用药提醒
+5. **启用通知权限**：在提醒页面或应用提示下授予浏览器通知权限
+6. 记录每次用药情况
+7. 定期记录健康数据
 
 ### Cookie 同意和隐私
 - 应用会在首次访问时显示 Cookie 使用说明
 - 用户可以选择接受或拒绝非必要的 Cookie
 - 拒绝后，Google Analytics 等分析工具将不会收集数据
 - 符合 GDPR 和其他隐私法规要求
-
-### GitHub 关联
-1. 进入个人中心
-2. 点击"关联"GitHub 按钮
-3. 授权后自动关联账户
 
 ### Gravatar 头像
 系统自动根据邮箱从 Gravatar 获取头像，在 [Gravatar.com](https://gravatar.com) 注册邮箱即可显示自定义头像。
