@@ -254,6 +254,83 @@
         </div>
       </div>
 
+      <!-- Notification Settings Card -->
+      <div v-if="notificationSupported" class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">通知设置</h2>
+        
+        <div class="space-y-4">
+          <div class="p-4 bg-gray-50 rounded-xl">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                  </svg>
+                  <h3 class="font-medium text-gray-900">浏览器通知</h3>
+                </div>
+                <p class="text-sm text-gray-600 mb-3">
+                  启用后，您将在用药时间和体征监测提醒时间前收到浏览器通知
+                </p>
+                
+                <!-- 通知权限状态 -->
+                <div v-if="notificationPermission === 'granted'" class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="text-sm font-medium text-green-600">通知权限已授予</span>
+                </div>
+                <div v-else-if="notificationPermission === 'denied'" class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="text-sm font-medium text-red-600">通知权限已拒绝</span>
+                  <p class="text-xs text-gray-500 ml-7">请在浏览器设置中手动启用通知权限</p>
+                </div>
+                <div v-else class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="text-sm font-medium text-orange-600">需要授予通知权限</span>
+                </div>
+              </div>
+              
+              <div class="flex flex-col gap-3 ml-4">
+                <!-- 请求权限按钮 -->
+                <button 
+                  v-if="notificationPermission !== 'granted'"
+                  @click="handleRequestNotificationPermission"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm whitespace-nowrap"
+                >
+                  授予权限
+                </button>
+                
+                <!-- 提醒开关 -->
+                <div v-if="notificationPermission === 'granted'" class="flex items-center gap-3">
+                  <span class="text-sm font-medium text-gray-700">提醒通知</span>
+                  <button 
+                    @click="toggleNotificationReminders"
+                    :class="[
+                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                      areNotificationRemindersEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                    ]"
+                  >
+                    <span 
+                      :class="[
+                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        areNotificationRemindersEnabled ? 'translate-x-6' : 'translate-x-1'
+                      ]"
+                    />
+                  </button>
+                  <span class="text-sm" :class="areNotificationRemindersEnabled ? 'text-blue-600 font-semibold' : 'text-gray-500'">
+                    {{ areNotificationRemindersEnabled ? '已启用' : '已禁用' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Cookie Preferences Card -->
       <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <h2 class="text-xl font-semibold text-gray-900 mb-6">Cookie 偏好设置</h2>
@@ -383,6 +460,7 @@ useHead({
 
 const { user, logout, deleteAccount } = useAuth();
 const { hasConsented, isAccepted, getConsentDate, resetConsent, setConsent } = useCookieConsent();
+const { isSupported: notificationSupported, permission: notificationPermission, requestPermission, areRemindersEnabled, enableReminders, disableReminders } = useBrowserNotifications();
 const router = useRouter();
 
 const currentPassword = ref("");
@@ -631,6 +709,33 @@ const confirmUnlinkAccount = async () => {
     unlinkDialogRef.value.setError(e.data?.error || e.message || '解绑失败，请重试');
   } finally {
     unlinkDialogRef.value.setLoading(false);
+  }
+};
+
+// Notification methods
+const areNotificationRemindersEnabled = computed(() => areRemindersEnabled.value);
+
+const handleRequestNotificationPermission = async () => {
+  const result = await requestPermission();
+  
+  if (result === 'granted') {
+    const { success } = useNotification();
+    success('通知权限已授予');
+  } else if (result === 'denied') {
+    const { error } = useNotification();
+    error('通知权限被拒绝，请在浏览器设置中手动启用');
+  }
+};
+
+const toggleNotificationReminders = () => {
+  if (areRemindersEnabled.value) {
+    disableReminders();
+    const { success } = useNotification();
+    success('提醒通知已禁用');
+  } else {
+    enableReminders();
+    const { success } = useNotification();
+    success('提醒通知已启用');
   }
 };
 

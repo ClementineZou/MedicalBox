@@ -143,6 +143,44 @@ export const useBrowserNotifications = () => {
     })
   }
 
+  // 发送体征监测提醒通知
+  const sendVitalSignReminder = (reminder: {
+    id: string
+    title: string
+    vitalSignType: string
+    time: string
+  }) => {
+    const typeNameMap: Record<string, string> = {
+      height: '身高',
+      weight: '体重',
+      bmi: 'BMI',
+      temperature: '体温',
+      bloodPressure: '血压',
+      bloodOxygen: '血氧',
+      bloodGlucose: '血糖',
+      heartRate: '心率'
+    }
+    
+    const typeName = typeNameMap[reminder.vitalSignType] || reminder.vitalSignType
+    const body = `请记录您的${typeName}数据\n时间: ${reminder.time}`
+    
+    return sendNotification(reminder.title, {
+      body,
+      tag: `vital-reminder-${reminder.id}`,
+      data: {
+        reminderId: reminder.id,
+        vitalSignType: reminder.vitalSignType,
+        type: 'vital-sign-reminder'
+      },
+      onclick: () => {
+        // 导航到健康监测页面
+        if (typeof window !== 'undefined') {
+          window.location.href = '/vitals'
+        }
+      }
+    })
+  }
+
   // 检查是否应该显示权限请求提示
   const shouldShowPermissionPrompt = computed(() => {
     if (!isSupported.value) return false
@@ -195,6 +233,7 @@ export const useBrowserNotifications = () => {
     sendNotification,
     sendMedicationReminder,
     sendExpiryReminder,
+    sendVitalSignReminder,
     enableReminders,
     disableReminders,
     areRemindersEnabled
