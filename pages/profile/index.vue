@@ -68,7 +68,7 @@
         
         <div class="space-y-4">
           <div class="p-4 bg-gray-50 rounded-xl">
-            <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between gap-4">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-2">
                   <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -81,43 +81,46 @@
                 </p>
                 
                 <!-- 通知权限状态 -->
-                <div v-if="notificationPermission === 'granted'" class="flex items-center gap-2 mb-3">
+                <div v-if="notificationPermission === 'granted'" class="flex items-center gap-2">
                   <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
                   <span class="text-sm font-medium text-green-600">通知权限已授予</span>
                 </div>
-                <div v-else-if="notificationPermission === 'denied'" class="flex items-center gap-2 mb-3">
+                <div v-else-if="notificationPermission === 'denied'" class="flex items-center gap-2">
                   <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-sm font-medium text-red-600">通知权限已拒绝</span>
-                  <p class="text-xs text-gray-500 ml-7">请在浏览器设置中手动启用通知权限</p>
+                  <div>
+                    <span class="text-sm font-medium text-red-600">通知权限已拒绝</span>
+                    <p class="text-xs text-gray-500 mt-1">请在浏览器设置中手动启用通知权限</p>
+                  </div>
                 </div>
-                <div v-else class="flex items-center gap-2 mb-3">
+                <div v-else class="flex items-center gap-2">
                   <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                   </svg>
                   <span class="text-sm font-medium text-orange-600">需要授予通知权限</span>
                 </div>
+              </div>
 
-                <!-- 切换开关 -->
-                <div class="flex items-center gap-4">
-                  <button
-                    @click="toggleNotificationReminders"
-                    :disabled="notificationPermission === 'denied'"
-                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    :class="areNotificationRemindersEnabled ? 'bg-blue-600' : 'bg-gray-200'"
-                  >
-                    <span
-                      class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                      :class="areNotificationRemindersEnabled ? 'translate-x-6' : 'translate-x-1'"
-                    />
-                  </button>
-                  <span class="text-sm" :class="areNotificationRemindersEnabled ? 'text-blue-600 font-semibold' : 'text-gray-500'">
-                    {{ areNotificationRemindersEnabled ? '已启用' : '已禁用' }}
-                  </span>
-                </div>
+              <!-- 切换开关移到右边 -->
+              <div class="flex flex-col items-end gap-2">
+                <button
+                  @click="toggleNotificationReminders"
+                  :disabled="notificationPermission === 'denied'"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="areNotificationRemindersEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  :title="areNotificationRemindersEnabled ? '点击禁用通知' : '点击启用通知'"
+                >
+                  <span
+                    class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                    :class="areNotificationRemindersEnabled ? 'translate-x-6' : 'translate-x-1'"
+                  />
+                </button>
+                <span class="text-sm whitespace-nowrap" :class="areNotificationRemindersEnabled ? 'text-blue-600 font-semibold' : 'text-gray-500'">
+                  {{ areNotificationRemindersEnabled ? '已启用' : '已禁用' }}
+                </span>
               </div>
             </div>
           </div>
@@ -617,6 +620,13 @@
         @confirm="handlePasswordConfirm"
         @cancel="showPasswordPrompt = false"
       />
+
+      <!-- Passkey Name Dialog -->
+      <PasskeyNameDialog
+        v-model="showPasskeyNameDialog"
+        @confirm="handlePasskeyNameConfirm"
+        @cancel="handlePasskeyNameCancel"
+      />
     </div>
   </div>
 </template>
@@ -659,6 +669,7 @@ const twoFactorBackupCodes = ref<string[]>([]);
 const showPasswordPrompt = ref(false);
 const passwordPromptAction = ref<'enable' | 'disable'>('enable');
 const passwordPromptLoading = ref(false);
+const showPasskeyNameDialog = ref(false);
 
 // Generate QR code data URL from TOTP URI
 const qrCodeDataUrl = ref<string>("");
@@ -1150,27 +1161,90 @@ const registerPasskey = async () => {
   passkeySuccess.value = "";
   
   try {
-    // Prompt for passkey name
-    const name = prompt('请为此 Passkey 命名（可选）：') || undefined;
+    // Use better-auth's passkey.addPasskey method (without name first)
+    // Note: addPasskey returns { data, error } and doesn't throw
+    const { data, error } = await authClient.passkey.addPasskey();
     
-    // Use better-auth's passkey.addPasskey method
-    await authClient.passkey.addPasskey({
-      name,
-    });
+    // Check if registration was successful
+    if (error) {
+      console.error('Failed to register passkey:', error);
+      passkeyError.value = error.message || 'Passkey 注册失败';
+      
+      const { error: showError } = useNotification();
+      showError('Passkey 注册失败');
+      
+      passkeyLoading.value = false;
+      return;
+    }
+    
+    // If successful, show dialog to set name
+    if (data) {
+      showPasskeyNameDialog.value = true;
+    } else {
+      // User cancelled the registration
+      passkeyLoading.value = false;
+    }
+  } catch (e: any) {
+    console.error('Failed to register passkey:', e);
+    passkeyError.value = e.message || 'Passkey 注册失败';
+    
+    const { error: showError } = useNotification();
+    showError('Passkey 注册失败');
+    
+    passkeyLoading.value = false;
+  }
+};
+
+const handlePasskeyNameConfirm = async (name: string) => {
+  try {
+    // Reload passkeys to get the newly created one
+    await loadPasskeys();
+    
+    if (name && passkeys.value.length > 0) {
+      // Update the name of the most recent passkey
+      const latestPasskey = passkeys.value[passkeys.value.length - 1];
+      
+      // Use Better Auth's updatePasskey method
+      const { error } = await authClient.passkey.updatePasskey({
+        id: latestPasskey.id,
+        name: name
+      });
+      
+      if (error) {
+        console.error('Failed to update passkey name:', error);
+        // Still show success since passkey was created
+      }
+    }
     
     passkeySuccess.value = "Passkey 已成功添加";
     
     const { success } = useNotification();
     success('Passkey 已成功添加');
     
-    // Reload passkeys
     await loadPasskeys();
   } catch (e: any) {
-    console.error('Failed to register passkey:', e);
-    passkeyError.value = e.message || 'Passkey 注册失败';
+    console.error('Failed to update passkey name:', e);
+    // Still show success since passkey was created
+    passkeySuccess.value = "Passkey 已成功添加";
+    
+    const { success } = useNotification();
+    success('Passkey 已成功添加');
+    
+    await loadPasskeys();
   } finally {
     passkeyLoading.value = false;
   }
+};
+
+const handlePasskeyNameCancel = async () => {
+  // Still successful, just without custom name
+  passkeySuccess.value = "Passkey 已成功添加";
+  
+  const { success } = useNotification();
+  success('Passkey 已成功添加');
+  
+  await loadPasskeys();
+  passkeyLoading.value = false;
 };
 
 const deletePasskey = async (passkeyId: string) => {

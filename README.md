@@ -134,6 +134,11 @@ npm install
 ```env
 # Better Auth 密钥（必需）
 BETTER_AUTH_SECRET=your-secret-key-here
+BETTER_AUTH_URL=http://localhost:3000
+
+# Passkey 配置（生产环境必需）
+# 开发环境自动使用 localhost，生产环境需设置为你的域名
+# PASSKEY_RP_ID=your-domain.com
 
 # Cloudflare Turnstile 验证码（推荐）
 TURNSTILE_SITE_KEY=your-turnstile-site-key
@@ -145,6 +150,11 @@ GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
 # 数据库 URL（开发环境使用 SQLite）
 DATABASE_URL="file:./prisma/dev.db"
 ```
+
+> **⚠️ Passkey 开发调试说明**：
+> - 开发环境必须使用 `http://localhost:3000` 访问（不要用 `127.0.0.1`）
+> - 使用 Chrome DevTools 的虚拟认证器进行测试（无需物理设备）
+> - 详细配置请参考 [PASSKEY_SETUP.md](./PASSKEY_SETUP.md)
 
 4. **初始化数据库**
 ```bash
@@ -167,6 +177,24 @@ npm run dev
 
 ### 生产部署
 
+**环境变量配置**（必需）：
+```bash
+# Better Auth（必需）
+BETTER_AUTH_SECRET=your-production-secret-min-32-chars
+BETTER_AUTH_URL=https://your-domain.com
+
+# Passkey 配置（必需，用于 WebAuthn）
+PASSKEY_RP_ID=your-domain.com  # 不含协议和端口
+
+# Cloudflare Turnstile（推荐）
+TURNSTILE_SITE_KEY=your-site-key
+TURNSTILE_SECRET_KEY=your-secret-key
+
+# 数据库（推荐 PostgreSQL 或 MySQL）
+DATABASE_URL=postgresql://user:pass@host:5432/medicalbox
+```
+
+**构建和启动**：
 ```bash
 # 构建生产版本
 npm run build
@@ -174,6 +202,11 @@ npm run build
 # 启动生产服务器
 npm run start
 ```
+
+> **📝 重要提示**：
+> - 生产环境必须使用 HTTPS（Passkey 强制要求）
+> - `PASSKEY_RP_ID` 必须与部署域名匹配
+> - 详细部署说明请参考 [PASSKEY_SETUP.md](./PASSKEY_SETUP.md)
 
 ## 📝 使用说明
 
