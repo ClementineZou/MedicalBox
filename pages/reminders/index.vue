@@ -10,6 +10,68 @@
       </button>
     </div>
 
+    <!-- 通知设置 -->
+    <div v-if="notificationSupported" class="bg-white rounded-md-lg shadow-md p-6">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-icons text-md-primary">notifications_active</span>
+            <h2 class="text-xl font-semibold">浏览器通知</h2>
+          </div>
+          <p class="text-sm text-md-on-surface-variant mb-4">
+            启用后，您将在用药时间前收到浏览器通知提醒
+          </p>
+          
+          <!-- 通知权限状态 -->
+          <div v-if="notificationPermission === 'granted'" class="flex items-center gap-2 mb-3">
+            <span class="material-icons text-green-600">check_circle</span>
+            <span class="text-sm text-green-600">通知权限已授予</span>
+          </div>
+          <div v-else-if="notificationPermission === 'denied'" class="flex items-center gap-2 mb-3">
+            <span class="material-icons text-red-600">cancel</span>
+            <span class="text-sm text-red-600">通知权限已拒绝，请在浏览器设置中启用</span>
+          </div>
+          <div v-else class="flex items-center gap-2 mb-3">
+            <span class="material-icons text-orange-600">info</span>
+            <span class="text-sm text-orange-600">需要授予通知权限</span>
+          </div>
+        </div>
+        
+        <div class="flex flex-col gap-2 ml-4">
+          <!-- 请求权限按钮 -->
+          <button 
+            v-if="notificationPermission !== 'granted'"
+            @click="handleRequestPermission"
+            class="bg-md-primary text-md-on-primary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm whitespace-nowrap"
+          >
+            授予权限
+          </button>
+          
+          <!-- 提醒开关 -->
+          <div v-if="notificationPermission === 'granted'" class="flex items-center gap-3">
+            <span class="text-sm">提醒通知:</span>
+            <button 
+              @click="toggleReminders"
+              :class="[
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                areRemindersEnabled ? 'bg-md-primary' : 'bg-md-surface-variant'
+              ]"
+            >
+              <span 
+                :class="[
+                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                  areRemindersEnabled ? 'translate-x-6' : 'translate-x-1'
+                ]"
+              />
+            </button>
+            <span class="text-sm" :class="areRemindersEnabled ? 'text-md-primary font-semibold' : 'text-md-on-surface-variant'">
+              {{ areRemindersEnabled ? '已启用' : '已禁用' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="bg-white rounded-md-lg shadow-md p-6 text-center">
       <p>加载中...</p>
@@ -201,6 +263,43 @@ const medicines = ref<Medicine[]>([])
 const isModalOpen = ref(false)
 const selectedReminder = ref<Reminder | null>(null)
 
+// 通知功能
+const { 
+  isSupported: notificationSupported, 
+  permission: notificationPermission,
+  requestPermission,
+  enableReminders,
+  disableReminders,
+  areRemindersEnabled
+} = useBrowserNotifications()
+
+// 请求通知权限
+const handleRequestPermission = async () => {
+  const result = await requestPermission()
+  if (result === 'granted') {
+    const { success } = useNotification()
+    success('通知权限已授予')
+    // 自动启用提醒
+    enableReminders()
+  } else if (result === 'denied') {
+    const { error } = useNotification()
+    error('通知权限被拒绝')
+  }
+}
+
+// 切换提醒开关
+const toggleReminders = () => {
+  if (areRemindersEnabled.value) {
+    disableReminders()
+    const { success } = useNotification()
+    success('提醒通知已禁用')
+  } else {
+    enableReminders()
+    const { success } = useNotification()
+    success('提醒通知已启用')
+  }
+}
+
 // 今日提醒
 const todayReminders = computed(() => {
   const today = new Date()
@@ -370,6 +469,15 @@ const deleteReminder = async (id: string) => {
 
 // 使用全局注入的时间格式化函数
 const { $formatDateTime, $formatTime } = useNuxtApp()
+
+// 本地格式化时间函数（用于显示）
+const formatTime = (dateInput: string | Date) => {
+  if ($formatTime && typeof dateInput === 'string') {
+    return $formatTime(dateInput)
+  }
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+}
 
 const getFrequencyText = (frequency: string) => {
   const map: Record<string, string> = {

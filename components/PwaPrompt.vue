@@ -38,14 +38,52 @@
       </div>
     </div>
   </div>
+
+  <div v-if="showNotificationPrompt" class="pwa-notification-toast" role="alert">
+    <div class="pwa-toast-content">
+      <div class="pwa-toast-message">
+        <span class="material-icons">notifications_active</span>
+        <div>
+          <strong>启用用药提醒</strong>
+          <p>允许通知以接收用药提醒，不会错过服药时间</p>
+        </div>
+      </div>
+      <div class="pwa-toast-actions">
+        <button @click="enableNotifications()" class="btn-update">
+          启用
+        </button>
+        <button @click="dismissNotificationPrompt()" class="btn-close">
+          稍后
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { useBrowserNotifications } from '~/composables/useBrowserNotifications'
+
 // 安装提示
 const showInstallPrompt = ref(false)
 const deferredPrompt = ref<any>(null)
 const needRefresh = ref(false)
 const updateServiceWorker = ref<(() => Promise<void>) | null>(null)
+
+// 通知提示 - 延迟初始化，避免在服务端渲染时调用
+const showNotificationPrompt = ref(false)
+let notificationSupported = ref(false)
+let notificationPermission = ref<NotificationPermission>('default')
+let shouldShowPermissionPrompt = ref(false)
+let requestPermission: (() => Promise<NotificationPermission>) | null = null
+
+// 在客户端初始化通知相关功能
+if (process.client) {
+  const browserNotifications = useBrowserNotifications()
+  notificationSupported = browserNotifications.isSupported
+  notificationPermission = browserNotifications.permission
+  shouldShowPermissionPrompt = browserNotifications.shouldShowPermissionPrompt
+  requestPermission = browserNotifications.requestPermission
+}
 
 const close = () => {
   needRefresh.value = false
@@ -72,6 +110,8 @@ onMounted(async () => {
 
   // 检查是否已经安装
   if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
+    // 已安装，检查通知权限
+    checkNotificationPermission()
     return
   }
 
@@ -85,6 +125,8 @@ onMounted(async () => {
       
       // 如果拒绝后超过 7 天，再次显示提示
       if (daysSinceDismissed < 7) {
+        // 虽然不显示安装提示，但可以检查通知权限
+        checkNotificationPermission()
         return
       }
     }
@@ -108,9 +150,29 @@ onMounted(async () => {
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('pwa-install-dismissed')
       }
+      // 安装后提示通知权限
+      setTimeout(() => {
+        checkNotificationPermission()
+      }, 2000)
     })
   }
+
+  // 初始检查通知权限
+  checkNotificationPermission()
 })
+
+// 检查是否应该显示通知权限提示
+const checkNotificationPermission = () => {
+  if (!notificationSupported.value) return
+  
+  // 如果应该显示权限提示
+  if (shouldShowPermissionPrompt.value) {
+    // 延迟显示，避免一次性弹出太多提示
+    setTimeout(() => {
+      showNotificationPrompt.value = true
+    }, 5000)
+  }
+}
 
 const install = async () => {
   if (!deferredPrompt.value) {
@@ -135,6 +197,10 @@ const dismissInstall = () => {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('pwa-install-dismissed', new Date().toISOString())
   }
+  // 稍后检查通知权限
+  setTimeout(() => {
+    checkNotificationPermission()
+  }, 2000)
 }
 
 const handleUpdate = async () => {
@@ -142,11 +208,30 @@ const handleUpdate = async () => {
     await updateServiceWorker.value()
   }
 }
+
+// 启用通知
+const enableNotifications = async () => {
+  if (!requestPermission) return
+  
+  const result = await requestPermission()
+  if (result === 'granted') {
+    showNotificationPrompt.value = false
+    // 通知用户启用成功
+    const { success } = useNotification()
+    success('通知已启用，您将收到用药提醒')
+  }
+}
+
+// 稍后再说
+const dismissNotificationPrompt = () => {
+  showNotificationPrompt.value = false
+}
 </script>
 
 <style scoped>
 .pwa-toast,
-.pwa-install-toast {
+.pwa-install-toast,
+.pwa-notification-toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -241,7 +326,8 @@ const handleUpdate = async () => {
 /* 移动端适配 */
 @media (max-width: 640px) {
   .pwa-toast,
-  .pwa-install-toast {
+  .pwa-install-toast,
+  .pwa-notification-toast {
     left: 16px;
     right: 16px;
     bottom: 16px;
