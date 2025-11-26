@@ -23,7 +23,7 @@ export default defineNuxtConfig({
     manifest: {
       name: 'MedicalBox - 家庭药箱管理系统',
       short_name: 'MedicalBox',
-      description: '家庭药箱管理系统，帮助您管理药物信息、设置用药提醒和记录用药历史',
+      description: '让用药更安全，让健康更可控',
       theme_color: '#1976d2',
       background_color: '#ffffff',
       display: 'standalone',
@@ -124,7 +124,7 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '家庭药箱管理系统，帮助您管理药物信息、设置用药提醒和记录用药历史' }
+        { name: 'description', content: '让用药更安全，让健康更可控' }
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
