@@ -254,6 +254,85 @@
         </div>
       </div>
 
+      <!-- Cookie Preferences Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Cookie 偏好设置</h2>
+        
+        <div class="space-y-4">
+          <div v-if="cookieConsentStatus" class="p-4 bg-gray-50 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="font-medium text-gray-900">当前状态</p>
+                <p class="text-sm text-gray-600 mt-1">
+                  您已{{ cookieConsentStatus === 'accepted' ? '接受' : '拒绝' }}使用 Cookie
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ cookieConsentDate ? '设置于 ' + formatDate(cookieConsentDate) : '' }}
+                </p>
+              </div>
+              <span 
+                :class="cookieConsentStatus === 'accepted' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'"
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+              >
+                {{ cookieConsentStatus === 'accepted' ? '已接受' : '已拒绝' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="p-4 border border-gray-200 rounded-xl">
+              <h3 class="font-medium text-gray-900 mb-2">必要 Cookie</h3>
+              <p class="text-sm text-gray-600 mb-2">
+                这些 Cookie 对于网站正常运行是必需的，包括身份验证、会话管理等。无法禁用。
+              </p>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700">状态</span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  始终启用
+                </span>
+              </div>
+            </div>
+
+            <div class="p-4 border border-gray-200 rounded-xl">
+              <h3 class="font-medium text-gray-900 mb-2">功能性 Cookie</h3>
+              <p class="text-sm text-gray-600 mb-2">
+                这些 Cookie 用于记住您的偏好设置，提供个性化体验。
+              </p>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700">状态</span>
+                <span 
+                  :class="cookieConsentStatus === 'accepted' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                >
+                  {{ cookieConsentStatus === 'accepted' ? '已启用' : '已禁用' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button
+              v-if="cookieConsentStatus === 'rejected'"
+              @click="updateCookieConsent(true)"
+              class="bg-blue-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+            >
+              接受 Cookie
+            </button>
+            <button
+              v-if="cookieConsentStatus === 'accepted'"
+              @click="updateCookieConsent(false)"
+              class="bg-gray-600 text-white py-2 px-4 rounded-xl font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all"
+            >
+              拒绝 Cookie
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Danger Zone Card -->
       <div class="bg-white rounded-2xl shadow-lg p-8 border-2 border-red-200">
         <h2 class="text-xl font-semibold text-red-600 mb-6">危险操作</h2>
@@ -303,6 +382,7 @@ useHead({
 });
 
 const { user, logout, deleteAccount } = useAuth();
+const { hasConsented, isAccepted, getConsentDate, resetConsent, setConsent } = useCookieConsent();
 const router = useRouter();
 
 const currentPassword = ref("");
@@ -320,6 +400,10 @@ const passwordCheckLoading = ref(true);
 const showUnlinkDialog = ref(false);
 const accountToUnlink = ref<any>(null);
 const unlinkDialogRef = ref<any>(null);
+
+// Cookie consent state
+const cookieConsentStatus = ref<string | null>(null);
+const cookieConsentDate = ref<Date | null>(null);
 
 // Gravatar support
 const userEmail = computed(() => user.value?.email);
@@ -550,10 +634,46 @@ const confirmUnlinkAccount = async () => {
   }
 };
 
+// Cookie consent methods
+const loadCookieConsent = () => {
+  if (process.client) {
+    const consent = localStorage.getItem('cookie-consent');
+    cookieConsentStatus.value = consent;
+    cookieConsentDate.value = getConsentDate();
+  }
+};
+
+const updateCookieConsent = (accepted: boolean) => {
+  setConsent(accepted);
+  loadCookieConsent();
+  
+  const { success } = useNotification();
+  success(accepted ? 'Cookie 偏好已更新为接受' : 'Cookie 偏好已更新为拒绝');
+  
+  // Reload the page to apply changes
+  setTimeout(() => {
+    window.location.reload();
+  }, 1000);
+};
+
+const resetCookieConsent = () => {
+  resetConsent();
+  loadCookieConsent();
+  
+  const { success } = useNotification();
+  success('Cookie 偏好已重置，页面将重新加载以显示同意提示');
+  
+  // Reload the page to show consent banner again
+  setTimeout(() => {
+    window.location.reload();
+  }, 1500);
+};
+
 // Load linked accounts on mount
 onMounted(() => {
   loadLinkedAccounts();
   checkHasPassword();
+  loadCookieConsent();
 });
 
 // Redirect if not logged in

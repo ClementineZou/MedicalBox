@@ -86,9 +86,9 @@
 - **Better Auth 1.4.0**：现代化的身份验证库
 
 ### 第三方集成
+- **Cloudflare Turnstile**：人机验证服务
 - **GitHub OAuth**：第三方账户关联
 - **Gravatar**：头像服务集成
-- **Cloudflare Turnstile**：人机验证服务
 
 ## 🚀 快速开始
 
@@ -118,8 +118,6 @@ npm install
 BETTER_AUTH_SECRET=your-secret-key-here
 
 # Cloudflare Turnstile 验证码（推荐）
-# 在 https://dash.cloudflare.com/ 获取密钥
-# 开发环境可使用测试密钥（见 .env.example）
 TURNSTILE_SITE_KEY=your-turnstile-site-key
 TURNSTILE_SECRET_KEY=your-turnstile-secret-key
 

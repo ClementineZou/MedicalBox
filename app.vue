@@ -5,6 +5,8 @@
     </NuxtLayout>
     <!-- 全局通知组件 -->
     <GlobalNotification />
+    <!-- Cookie 同意组件 -->
+    <CookieConsent />
   </div>
 </template>
 
