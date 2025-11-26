@@ -127,6 +127,7 @@ export default defineNuxtConfig({
         { name: 'description', content: '家庭药箱管理系统，帮助您管理药物信息、设置用药提醒和记录用药历史' }
       ],
       link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons' }
       ]
     }
