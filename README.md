@@ -99,6 +99,7 @@
 - **Cloudflare Turnstile**：人机验证服务
 - **GitHub OAuth**：第三方账户关联
 - **Gravatar**：头像服务集成
+- **Google Analytics**：网站分析（支持 Consent Mode v2）
 
 ## 🚀 快速开始
 
@@ -134,6 +135,9 @@ TURNSTILE_SECRET_KEY=your-turnstile-secret-key
 # GitHub OAuth（可选）
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Google Analytics（可选）
+GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
 
 # 数据库 URL（开发环境使用 SQLite）
 DATABASE_URL="file:./prisma/dev.db"
@@ -186,6 +190,13 @@ npm run start
 
 ### Gravatar 头像
 系统自动根据邮箱从 Gravatar 获取头像，在 [Gravatar.com](https://gravatar.com) 注册邮箱即可显示自定义头像。
+
+### Cookie 同意和隐私
+- 应用会在首次访问时显示 Cookie 使用说明
+- 用户可以选择接受或拒绝非必要的 Cookie
+- 拒绝后，Google Analytics 等分析工具将不会收集数据
+- 符合 GDPR 和其他隐私法规要求
+- 查看 [Google Analytics 集成说明](docs/GOOGLE_ANALYTICS.md) 了解详细信息
 
 ### 在手机上安装 PWA
 

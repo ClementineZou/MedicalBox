@@ -5,8 +5,18 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxtjs/tailwindcss',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    'nuxt-gtag'
   ],
+
+  gtag: {
+    id: process.env.GOOGLE_ANALYTICS_ID || '',
+    loadingStrategy: 'async',
+    config: {
+      anonymize_ip: true,
+      cookie_flags: 'SameSite=None;Secure'
+    }
+  },
 
   pwa: {
     registerType: 'autoUpdate',
@@ -135,7 +145,8 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       githubClientId: process.env.GITHUB_CLIENT_ID,
-      turnstileSiteKey: process.env.TURNSTILE_SITE_KEY
+      turnstileSiteKey: process.env.TURNSTILE_SITE_KEY,
+      googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID
     }
   }
 })

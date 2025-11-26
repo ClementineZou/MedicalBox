@@ -3,6 +3,13 @@
  * 用于根据用户同意状态启用或禁用可选功能
  */
 
+// Google Analytics gtag 类型声明
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void
+  }
+}
+
 /**
  * 启用可选功能（分析、追踪等）
  */
@@ -11,12 +18,18 @@ export const enableOptionalFeatures = () => {
 
   console.log('启用可选功能');
   
-  // 1. 启用 Google Analytics（如果配置了）
-  // if (window.gtag) {
-  //   window.gtag('consent', 'update', {
-  //     analytics_storage: 'granted'
-  //   });
-  // }
+  // 1. 启用 Google Analytics
+  if (window.gtag) {
+    window.gtag('consent', 'update', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted',
+      functionality_storage: 'granted',
+      personalization_storage: 'granted'
+    });
+    console.log('Google Analytics: Consent granted');
+  }
 
   // 2. 启用其他第三方服务
   // 例如：热力图、用户行为分析等
@@ -36,12 +49,18 @@ export const disableOptionalFeatures = () => {
 
   console.log('禁用可选功能');
   
-  // 1. 禁用 Google Analytics（如果配置了）
-  // if (window.gtag) {
-  //   window.gtag('consent', 'update', {
-  //     analytics_storage: 'denied'
-  //   });
-  // }
+  // 1. 禁用 Google Analytics
+  if (window.gtag) {
+    window.gtag('consent', 'update', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied'
+    });
+    console.log('Google Analytics: Consent denied');
+  }
 
   // 2. 清除非必要的 localStorage 项
   // 保留必要的项：认证信息、Cookie 同意记录
