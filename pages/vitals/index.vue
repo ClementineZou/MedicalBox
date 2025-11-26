@@ -398,6 +398,9 @@ const loadData = async () => {
     vitalsData.value = (vitalsRes as any).data || []
     remindersData.value = (remindersRes as any).data || []
     referenceRanges.value = (rangesRes as any).data || []
+    
+    // Debug: log reference ranges
+    console.log('Loaded reference ranges:', referenceRanges.value)
   } catch (error) {
     console.error('Error loading vital signs data:', error)
     const { error: showError } = useNotification()

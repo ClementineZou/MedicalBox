@@ -7,7 +7,10 @@ export default defineEventHandler(async (event) => {
         const type = query.type as string
 
         const where: any = {
-            userId // Filter by authenticated user
+            OR: [
+                { userId }, // User-specific ranges
+                { isSystem: true } // System default ranges
+            ]
         }
 
         if (type) {
@@ -16,9 +19,10 @@ export default defineEventHandler(async (event) => {
 
         const ranges = await prisma.vitalSignReferenceRange.findMany({
             where,
-            orderBy: {
-                type: 'asc'
-            }
+            orderBy: [
+                { type: 'asc' },
+                { isSystem: 'desc' } // System ranges first, then user ranges
+            ]
         })
 
         return {

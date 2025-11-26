@@ -52,6 +52,10 @@ const chartData = computed(() => {
   
   const datasets: any[] = []
 
+  // Debug: log reference range
+  console.log('Chart type:', props.type)
+  console.log('Reference range:', props.referenceRange)
+
   if (props.type === 'bloodPressure') {
     // Blood Pressure: Systolic and Diastolic
     datasets.push({
@@ -95,15 +99,16 @@ const chartData = computed(() => {
   // Add reference range bands if available
   if (props.type === 'bloodPressure') {
     // Blood Pressure specific ranges
-    // Systolic Range (Greenish)
+    // Systolic Range (Redish)
     const sysMin = props.referenceRange?.minValue || 90
-    const sysMax = props.referenceRange?.maxValue || 120 // Default systolic max if not provided
+    const sysMax = props.referenceRange?.maxValue || 120
     
     datasets.push({
       label: '收缩压正常上限',
       data: labels.map(() => sysMax),
-      borderColor: 'rgba(239, 68, 68, 0.3)', // red-500 low opacity
+      borderColor: 'rgba(239, 68, 68, 0.5)', // red-500
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: false,
       order: 2
@@ -111,24 +116,25 @@ const chartData = computed(() => {
     datasets.push({
       label: '收缩压正常下限',
       data: labels.map(() => sysMin),
-      borderColor: 'rgba(239, 68, 68, 0.3)',
+      borderColor: 'rgba(239, 68, 68, 0.5)',
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: '-1',
-      backgroundColor: 'rgba(239, 68, 68, 0.05)',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
       order: 2
     })
 
     // Diastolic Range (Blueish)
-    // Hardcoded standard diastolic range as it's not in the single-range model
     const diaMin = 60
     const diaMax = 80
     
     datasets.push({
       label: '舒张压正常上限',
       data: labels.map(() => diaMax),
-      borderColor: 'rgba(59, 130, 246, 0.3)', // blue-500 low opacity
+      borderColor: 'rgba(59, 130, 246, 0.5)', // blue-500
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: false,
       order: 2
@@ -136,36 +142,39 @@ const chartData = computed(() => {
     datasets.push({
       label: '舒张压正常下限',
       data: labels.map(() => diaMin),
-      borderColor: 'rgba(59, 130, 246, 0.3)',
+      borderColor: 'rgba(59, 130, 246, 0.5)',
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: '-1',
-      backgroundColor: 'rgba(59, 130, 246, 0.05)',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
       order: 2
     })
 
   } else if (props.referenceRange) {
-    // Standard single range for other types
-    // Max line
+    // Standard single range for other types (BMI, temperature, bloodOxygen, heartRate, bloodGlucose)
+    // Max line (upper bound)
     datasets.push({
       label: '正常上限',
       data: labels.map(() => props.referenceRange?.maxValue),
-      borderColor: 'rgba(74, 222, 128, 0.5)', // green-400
+      borderColor: 'rgba(34, 197, 94, 0.7)', // green-500
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: false,
       order: 1
     })
 
-    // Min line
+    // Min line (lower bound)
     datasets.push({
       label: '正常下限',
       data: labels.map(() => props.referenceRange?.minValue),
-      borderColor: 'rgba(74, 222, 128, 0.5)', // green-400
+      borderColor: 'rgba(34, 197, 94, 0.7)', // green-500
       borderDash: [5, 5],
+      borderWidth: 2,
       pointRadius: 0,
       fill: '-1', // Fill to the previous dataset (Max line)
-      backgroundColor: 'rgba(74, 222, 128, 0.1)',
+      backgroundColor: 'rgba(34, 197, 94, 0.15)', // Light green fill
       order: 1
     })
   }
