@@ -8,7 +8,14 @@
           @click="exportToPDF"
           class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
         >
-          ↓ 导出PDF
+          📄 导出清单
+        </button>
+        <button 
+          v-if="medicines.length > 0"
+          @click="toggleLabelMode"
+          class="bg-md-tertiary text-md-on-tertiary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+        >
+          🏷️ {{ isLabelMode ? '取消选择' : '导出标签' }}
         </button>
         <button 
           @click="openAddModal"
@@ -21,6 +28,35 @@
 
     <!-- Search and Filter -->
     <div class="bg-white rounded-md-lg shadow-md p-6">
+      <!-- 标签模式提示 -->
+      <div v-if="isLabelMode" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="font-semibold text-blue-900">标签导出模式</p>
+            <p class="text-sm text-blue-700 mt-1">
+              已选择 {{ selectedMedicines.length }} 个药品
+              {{ selectedMedicines.length > 0 ? '，点击下方按钮导出标签' : '，请点击药品卡片进行选择' }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              v-if="selectedMedicines.length > 0"
+              @click="exportLabels"
+              class="bg-md-primary text-md-on-primary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity"
+            >
+              🖨️ 打印标签 ({{ selectedMedicines.length }})
+            </button>
+            <button 
+              v-if="medicines.length > 0"
+              @click="selectAllMedicines"
+              class="bg-md-secondary text-md-on-secondary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity"
+            >
+              {{ selectedMedicines.length === medicines.length ? '取消全选' : '全选' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <div class="flex gap-4">
         <div class="flex-1 relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -76,8 +112,21 @@
       <div 
         v-for="medicine in medicines" 
         :key="medicine.id"
-        class="bg-white rounded-md-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+        class="bg-white rounded-md-lg shadow-md p-6 hover:shadow-lg transition-shadow relative"
+        :class="{ 
+          'ring-4 ring-md-primary': isLabelMode && selectedMedicines.includes(medicine.id),
+          'cursor-pointer': isLabelMode
+        }"
+        @click="isLabelMode ? toggleSelection(medicine.id) : null"
       >
+        <!-- 选中标记 -->
+        <div 
+          v-if="isLabelMode && selectedMedicines.includes(medicine.id)"
+          class="absolute top-3 right-3 bg-md-primary text-md-on-primary w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm shadow-lg z-10"
+        >
+          ✓
+        </div>
+        
         <div class="flex justify-between items-start mb-4">
           <div>
             <h3 class="text-xl font-semibold">{{ medicine.name }}</h3>
@@ -85,7 +134,8 @@
           </div>
           <span 
             v-if="medicine.category"
-            class="px-3 py-1 bg-md-primary-container text-md-on-primary-container rounded-full text-xs"
+            class="px-3 py-1 bg-md-primary-container text-md-on-primary-container rounded-full text-xs transition-all duration-200"
+            :class="{ 'mr-8': isLabelMode && selectedMedicines.includes(medicine.id) }"
           >
             {{ medicine.category }}
           </span>
@@ -95,7 +145,7 @@
           <div v-if="medicine.controlTypes" class="flex justify-between">
             <span class="text-md-on-surface-variant">管控分类:</span>
             <span class="font-medium" :class="getControlTypeColor(medicine.controlTypes)">
-              {{ medicine.controlTypes }}
+              {{ medicine.controlTypes.replace(/,/g, '、') }}
             </span>
           </div>
           <div v-if="medicine.dosage" class="flex justify-between">
@@ -121,16 +171,25 @@
 
         <div class="mt-4 pt-4 border-t border-md-surface-variant flex gap-2">
           <button 
+            v-if="!isLabelMode"
             @click="openEditModal(medicine)"
             class="flex-1 bg-md-secondary text-md-on-secondary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
           >
             编辑
           </button>
           <button 
+            v-if="!isLabelMode"
             @click="deleteMedicine(medicine.id)"
             class="flex-1 bg-md-error text-md-on-error px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
           >
             删除
+          </button>
+          <button 
+            v-if="isLabelMode"
+            @click.stop="exportSingleLabel(medicine)"
+            class="flex-1 bg-md-tertiary text-md-on-tertiary px-4 py-2 rounded-md-sm hover:opacity-90 transition-opacity text-sm"
+          >
+            🏷️ 单独导出
           </button>
         </div>
       </div>
@@ -160,6 +219,8 @@ const searchQuery = ref('')
 const categoryFilter = ref('')
 const isModalOpen = ref(false)
 const selectedMedicine = ref<Medicine | null>(null)
+const isLabelMode = ref(false)
+const selectedMedicines = ref<string[]>([])
 
 // 加载药品列表
 const loadMedicines = async () => {
@@ -237,6 +298,66 @@ const exportToPDF = async () => {
   } catch (error) {
     console.error('Error exporting PDF:', error)
     showError('PDF导出失败，请重试')
+  }
+}
+
+// 切换标签模式
+const toggleLabelMode = () => {
+  isLabelMode.value = !isLabelMode.value
+  if (!isLabelMode.value) {
+    selectedMedicines.value = []
+  }
+}
+
+// 切换药品选择
+const toggleSelection = (medicineId: string) => {
+  const index = selectedMedicines.value.indexOf(medicineId)
+  if (index > -1) {
+    selectedMedicines.value.splice(index, 1)
+  } else {
+    selectedMedicines.value.push(medicineId)
+  }
+}
+
+// 全选/取消全选
+const selectAllMedicines = () => {
+  if (selectedMedicines.value.length === medicines.value.length) {
+    selectedMedicines.value = []
+  } else {
+    selectedMedicines.value = medicines.value.map(m => m.id)
+  }
+}
+
+// 导出选中的标签
+const exportLabels = async () => {
+  const { exportSelectedMedicineLabels } = await import('~/utils/medicineLabelExport')
+  const { success, error: showError } = useNotification()
+  
+  if (selectedMedicines.value.length === 0) {
+    showError('请至少选择一个药品')
+    return
+  }
+  
+  try {
+    await exportSelectedMedicineLabels(medicines.value, selectedMedicines.value)
+    success(`已导出 ${selectedMedicines.value.length} 个药品标签`)
+  } catch (error) {
+    console.error('Error exporting labels:', error)
+    showError('标签导出失败，请重试')
+  }
+}
+
+// 导出单个药品标签
+const exportSingleLabel = async (medicine: Medicine) => {
+  const { exportMedicineLabels } = await import('~/utils/medicineLabelExport')
+  const { success, error: showError } = useNotification()
+  
+  try {
+    await exportMedicineLabels([medicine])
+    success('标签导出成功')
+  } catch (error) {
+    console.error('Error exporting label:', error)
+    showError('标签导出失败，请重试')
   }
 }
 
