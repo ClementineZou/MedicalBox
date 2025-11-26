@@ -60,7 +60,7 @@ prisma/*.db
 prisma/*.db-journal
 prisma/prisma/
 
-# Test files
+# test files
 **/test-*.vue
 **/test-*.ts
 **/test-*.js
@@ -68,7 +68,7 @@ prisma/prisma/
 # Better Auth
 .auth/
 
-# Logs
+# logs
 *.log
 logs/
 

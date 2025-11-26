@@ -4,16 +4,18 @@ export const useAuth = () => {
     const session = authClient.useSession();
 
     const login = async (email: string, password: string) => {
-        const { data, error } = await authClient.signIn.email({
+        const response = await authClient.signIn.email({
             email,
             password,
         });
 
-        if (error) {
-            throw new Error(error.message || "登录失败");
+        // Check for errors
+        if (response.error) {
+            throw new Error(response.error.message || "登录失败");
         }
 
-        return data;
+        // Return the full response (may contain twoFactorRedirect)
+        return response.data;
     };
 
     const register = async (email: string, password: string, name?: string) => {

@@ -19,6 +19,7 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  twoFactorEnabled Boolean @default(false)
   
   // Relations
   sessions             Session[]
@@ -29,6 +30,8 @@ model User {
   medicineUsageRecords MedicineUsageRecord[]
   reminders            Reminder[]
   vitalSignReminders   VitalSignReminder[]
+  loginHistory         LoginHistory[]
+  trustedDevices       TrustedDevice[]
 }
 
 model Session {
@@ -73,6 +76,75 @@ model Verification {
   updatedAt  DateTime @updatedAt
   
   @@unique([identifier, value])
+}
+
+// Two Factor Authentication
+model TwoFactor {
+  id        String   @id @default(cuid())
+  userId    String
+  secret    String
+  backupCodes String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId])
+}
+
+// Passkey (WebAuthn)
+model Passkey {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String?
+  publicKey        String
+  credentialID     String   @unique
+  counter          Int
+  deviceType       String
+  backedUp         Boolean
+  transports       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// Login History - 登录历史记录
+model LoginHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  ipAddress   String?  // IP地址
+  userAgent   String?  // 浏览器信息
+  location    String?  // 登录位置（可选，需要IP解析服务）
+  deviceInfo  String?  // 设备信息
+  loginMethod String   @default("email") // 登录方式: email, passkey, oauth
+  success     Boolean  @default(true) // 登录是否成功
+  failReason  String?  // 失败原因
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Trusted Device - 可信设备
+model TrustedDevice {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  deviceName    String   // 设备名称
+  deviceId      String   @unique // 设备唯一标识
+  ipAddress     String?  // IP地址
+  userAgent     String   // 浏览器信息
+  lastUsed      DateTime @default(now()) // 最后使用时间
+  trustExpires  DateTime // 信任过期时间（30天）
+  isActive      Boolean  @default(true) // 是否激活
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([deviceId])
+  @@index([trustExpires])
 }
 
 // 药物信息表

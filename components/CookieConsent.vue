@@ -17,13 +17,13 @@
             <div class="flex gap-3 shrink-0">
               <button 
                 @click="handleReject"
-                class="bg-md-surface-variant text-md-on-surface-variant px-6 py-2.5 rounded-md-sm hover:opacity-90 transition-opacity font-medium whitespace-nowrap"
+                class="bg-md-surface-variant text-md-on-surface-variant px-6 py-3 rounded-md-sm hover:opacity-90 transition-opacity font-medium whitespace-nowrap min-w-[80px]"
               >
                 拒绝
               </button>
               <button 
                 @click="handleAccept"
-                class="bg-md-primary text-md-on-primary px-6 py-2.5 rounded-md-sm hover:opacity-90 transition-opacity font-medium whitespace-nowrap shadow-md"
+                class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-sm hover:opacity-90 transition-opacity font-medium whitespace-nowrap shadow-md min-w-[80px]"
               >
                 接受
               </button>

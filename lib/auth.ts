@@ -1,5 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { twoFactor } from "better-auth/plugins/two-factor";
+import { passkey } from "@better-auth/passkey";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -30,7 +32,27 @@ export const auth = betterAuth({
         },
     },
 
+    // Enable plugins
+    plugins: [
+        twoFactor({
+            // Two-factor authentication configuration
+            issuer: "MedicalBox", // The name shown in authenticator apps
+            otpOptions: {
+                period: 30, // OTP validity period in seconds
+            },
+        }),
+        passkey({
+            // Passkey (WebAuthn) configuration
+            rpName: "MedicalBox", // Relying Party name
+            rpID: process.env.NODE_ENV === "production" 
+                ? process.env.PASSKEY_RP_ID || "medicalbox.com" // Your production domain
+                : "localhost",
+            origin: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+        }),
+    ],
+
     // Better Auth 使用 plugins 来扩展功能，包括 turnstile
     // 但在当前版本中，turnstile 可能需要手动在 API 路由中验证
     // 或者直接在配置中添加（如果支持的话）
 });
+
