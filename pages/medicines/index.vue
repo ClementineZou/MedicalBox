@@ -341,6 +341,9 @@ const exportLabels = async () => {
   try {
     await exportSelectedMedicineLabels(medicines.value, selectedMedicines.value)
     success(`已导出 ${selectedMedicines.value.length} 个药品标签`)
+    // 打印完成后自动退出标签模式
+    isLabelMode.value = false
+    selectedMedicines.value = []
   } catch (error) {
     console.error('Error exporting labels:', error)
     showError('标签导出失败，请重试')

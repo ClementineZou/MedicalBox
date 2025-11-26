@@ -261,15 +261,24 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
     printWindow.document.write(html)
     printWindow.document.close()
     
-    // 等待内容加载完成后打印
-    printWindow.onload = () => {
-      printWindow.print()
-      // 打印后关闭窗口
-      setTimeout(() => {
-        printWindow.close()
-      }, 100)
-    }
+    // 返回Promise，当打印窗口关闭时resolve
+    return new Promise<void>((resolve) => {
+      // 等待内容加载完成后打印
+      printWindow.onload = () => {
+        printWindow.print()
+      }
+      
+      // 监听窗口关闭事件
+      const checkWindowClosed = setInterval(() => {
+        if (printWindow.closed) {
+          clearInterval(checkWindowClosed)
+          resolve()
+        }
+      }, 500)
+    })
   }
+  
+  return Promise.resolve()
 }
 
 /**
@@ -339,7 +348,7 @@ function generateLabelHTML(medicine: Medicine): string {
         </div>
         
         <div class="info-row">
-          <span class="info-label">用法:</span>
+          <span class="info-label">用法用量:</span>
           <span class="info-value">${usageInfo}</span>
         </div>
         

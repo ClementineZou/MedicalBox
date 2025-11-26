@@ -28,8 +28,20 @@
   --md-sys-color-on-error: #FFFFFF;
 }
 
+/* Prevent horizontal scroll on all devices */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
   background-color: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
+}
+
+/* Ensure all full-width elements respect viewport */
+* {
+  box-sizing: border-box;
 }

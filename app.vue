@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-md-surface">
+  <div class="min-h-screen bg-md-surface overflow-x-hidden">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
