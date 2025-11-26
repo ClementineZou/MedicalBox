@@ -179,6 +179,11 @@
 <script setup lang="ts">
 import { authClient } from '~/lib/auth-client';
 
+// Set page title
+useHead({
+  title: '登录'
+});
+
 const { login } = useAuth();
 const router = useRouter();
 

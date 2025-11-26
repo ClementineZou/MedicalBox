@@ -131,6 +131,11 @@
 </template>
 
 <script setup lang="ts">
+// Set page title
+useHead({
+  title: '注册'
+});
+
 const { register } = useAuth();
 const router = useRouter();
 
