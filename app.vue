@@ -7,6 +7,8 @@
     <GlobalNotification />
     <!-- Cookie 同意组件 -->
     <CookieConsent />
+    <!-- PWA 更新和安装提示 -->
+    <PwaPrompt />
   </div>
 </template>
 
