@@ -123,3 +123,30 @@ export interface VitalSignReferenceRange {
   createdAt: Date | string
   updatedAt: Date | string
 }
+
+// 隐私保护设置类型
+export interface PrivacySettings {
+  enhancedPrivacyEnabled: boolean // 是否启用强化隐私保护
+  privacyVerifyDuration: number   // 免验证时长（分钟）
+  hasTwoFactor: boolean           // 是否设置了两步验证
+  hasPasskey: boolean             // 是否设置了Passkey
+}
+
+// 隐私验证状态类型
+export interface PrivacyVerificationStatus {
+  isVerified: boolean    // 是否已验证
+  expiresAt?: Date | string // 验证过期时间
+  remainingMinutes?: number // 剩余免验证分钟数
+}
+
+// 免验证时长选项
+export const PRIVACY_VERIFY_DURATION_OPTIONS = [
+  { value: 5, label: '5 分钟' },
+  { value: 10, label: '10 分钟（默认）' },
+  { value: 15, label: '15 分钟' },
+  { value: 30, label: '30 分钟' },
+  { value: 60, label: '1 小时' },
+  { value: 120, label: '2 小时' },
+  { value: 240, label: '4 小时' },
+  { value: 480, label: '8 小时' },
+] as const

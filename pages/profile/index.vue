@@ -584,6 +584,105 @@
       <!-- Login History Card -->
       <LoginHistoryCard class="mb-6" />
 
+      <!-- Enhanced Privacy Protection Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">强化隐私保护</h2>
+        
+        <div v-if="privacySettingsLoading" class="text-center py-8">
+          <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p class="text-gray-600 mt-2">加载中...</p>
+        </div>
+
+        <div v-else class="space-y-6">
+          <!-- Status Info -->
+          <div class="p-4 rounded-xl" :class="privacySettings?.enhancedPrivacyEnabled ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'">
+            <div class="flex items-start">
+              <svg v-if="privacySettings?.enhancedPrivacyEnabled" class="w-5 h-5 text-green-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <svg v-else class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p :class="privacySettings?.enhancedPrivacyEnabled ? 'text-green-700' : 'text-blue-700'" class="text-sm font-medium">
+                  {{ privacySettings?.enhancedPrivacyEnabled ? '强化隐私保护已启用' : '强化隐私保护未启用' }}
+                </p>
+                <p :class="privacySettings?.enhancedPrivacyEnabled ? 'text-green-600' : 'text-blue-600'" class="text-sm mt-1">
+                  {{ privacySettings?.enhancedPrivacyEnabled 
+                    ? '访问用药记录、健康监测页面及导出数据时需要进行两步验证' 
+                    : '启用后，访问敏感数据时需要进行两步验证以增强隐私保护' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prerequisite Check -->
+          <div v-if="!canEnablePrivacyProtection" class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <div class="flex items-start">
+              <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="text-yellow-800 text-sm font-medium">需要先设置两步验证</p>
+                <p class="text-yellow-700 text-sm mt-1">
+                  请先设置 TOTP 验证器或 Passkey，然后才能启用强化隐私保护功能。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div v-if="canEnablePrivacyProtection" class="space-y-4">
+            <!-- Enable/Disable Toggle -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div class="flex-1">
+                <h3 class="font-medium text-gray-900">启用强化隐私保护</h3>
+                <p class="text-sm text-gray-600 mt-1">
+                  启用后，进入用药记录、健康监测页面时需要两步验证
+                </p>
+              </div>
+              <button
+                @click="togglePrivacyProtection"
+                :disabled="privacySettingsUpdating"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="privacySettings?.enhancedPrivacyEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  :class="privacySettings?.enhancedPrivacyEnabled ? 'translate-x-6' : 'translate-x-1'"
+                />
+              </button>
+            </div>
+
+            <!-- Verify Duration Setting -->
+            <div v-if="privacySettings?.enhancedPrivacyEnabled" class="p-4 bg-gray-50 rounded-xl">
+              <h3 class="font-medium text-gray-900 mb-2">免验证时长</h3>
+              <p class="text-sm text-gray-600 mb-3">
+                验证成功后，在指定时间内无需再次验证
+              </p>
+              <select
+                v-model="selectedVerifyDuration"
+                @change="updateVerifyDuration"
+                :disabled="privacySettingsUpdating"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option v-for="option in verifyDurationOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Success/Error Messages -->
+          <div v-if="privacySettingsSuccess" class="p-4 bg-green-50 border border-green-200 rounded-xl">
+            <p class="text-green-700 text-sm">{{ privacySettingsSuccess }}</p>
+          </div>
+          <div v-if="privacySettingsError" class="p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p class="text-red-700 text-sm">{{ privacySettingsError }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Danger Zone Card -->
       <div class="bg-white rounded-2xl shadow-lg p-8 border-2 border-red-200">
         <h2 class="text-xl font-semibold text-red-600 mb-6">危险操作</h2>
@@ -699,6 +798,26 @@ const passkeys = ref<any[]>([]);
 const passkeyLoading = ref(false);
 const passkeySuccess = ref("");
 const passkeyError = ref("");
+
+// Privacy Protection state
+import { PRIVACY_VERIFY_DURATION_OPTIONS } from '~/types';
+const privacySettings = ref<{
+  enhancedPrivacyEnabled: boolean;
+  privacyVerifyDuration: number;
+  hasTwoFactor: boolean;
+  hasPasskey: boolean;
+} | null>(null);
+const privacySettingsLoading = ref(true);
+const privacySettingsUpdating = ref(false);
+const privacySettingsSuccess = ref("");
+const privacySettingsError = ref("");
+const selectedVerifyDuration = ref(10);
+const verifyDurationOptions = PRIVACY_VERIFY_DURATION_OPTIONS;
+
+// Computed: Check if user can enable privacy protection
+const canEnablePrivacyProtection = computed(() => {
+  return privacySettings.value?.hasTwoFactor || privacySettings.value?.hasPasskey;
+});
 
 // Cookie consent state
 const cookieConsentStatus = ref<string | null>(null);
@@ -1337,12 +1456,114 @@ const resetCookieConsent = () => {
   }, 1500);
 };
 
+// Privacy Protection methods
+const loadPrivacySettings = async () => {
+  privacySettingsLoading.value = true;
+  privacySettingsError.value = "";
+  
+  try {
+    const response = await $fetch('/api/user/privacy-settings');
+    if ((response as any).success) {
+      privacySettings.value = (response as any).data;
+      selectedVerifyDuration.value = privacySettings.value?.privacyVerifyDuration || 10;
+    }
+  } catch (e: any) {
+    console.error('Failed to load privacy settings:', e);
+    privacySettingsError.value = '加载隐私设置失败';
+  } finally {
+    privacySettingsLoading.value = false;
+  }
+};
+
+const togglePrivacyProtection = async () => {
+  if (!canEnablePrivacyProtection.value && !privacySettings.value?.enhancedPrivacyEnabled) {
+    privacySettingsError.value = '请先设置两步验证（TOTP 或 Passkey）';
+    return;
+  }
+
+  privacySettingsUpdating.value = true;
+  privacySettingsSuccess.value = "";
+  privacySettingsError.value = "";
+
+  try {
+    const newValue = !privacySettings.value?.enhancedPrivacyEnabled;
+    const response = await $fetch('/api/user/privacy-settings', {
+      method: 'POST',
+      body: {
+        enhancedPrivacyEnabled: newValue,
+      },
+    });
+
+    if ((response as any).success) {
+      if (privacySettings.value) {
+        privacySettings.value.enhancedPrivacyEnabled = (response as any).data.enhancedPrivacyEnabled;
+      }
+      privacySettingsSuccess.value = newValue ? '强化隐私保护已启用' : '强化隐私保护已关闭';
+      
+      const { success: showSuccess } = useNotification();
+      showSuccess(privacySettingsSuccess.value);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        privacySettingsSuccess.value = "";
+      }, 3000);
+    }
+  } catch (e: any) {
+    console.error('Failed to toggle privacy protection:', e);
+    privacySettingsError.value = e.data?.statusMessage || e.message || '更新设置失败';
+    
+    const { error: showError } = useNotification();
+    showError(privacySettingsError.value);
+  } finally {
+    privacySettingsUpdating.value = false;
+  }
+};
+
+const updateVerifyDuration = async () => {
+  privacySettingsUpdating.value = true;
+  privacySettingsSuccess.value = "";
+  privacySettingsError.value = "";
+
+  try {
+    const response = await $fetch('/api/user/privacy-settings', {
+      method: 'POST',
+      body: {
+        privacyVerifyDuration: selectedVerifyDuration.value,
+      },
+    });
+
+    if ((response as any).success) {
+      if (privacySettings.value) {
+        privacySettings.value.privacyVerifyDuration = (response as any).data.privacyVerifyDuration;
+      }
+      privacySettingsSuccess.value = '免验证时长已更新';
+      
+      const { success: showSuccess } = useNotification();
+      showSuccess(privacySettingsSuccess.value);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        privacySettingsSuccess.value = "";
+      }, 3000);
+    }
+  } catch (e: any) {
+    console.error('Failed to update verify duration:', e);
+    privacySettingsError.value = e.data?.statusMessage || e.message || '更新设置失败';
+    
+    const { error: showError } = useNotification();
+    showError(privacySettingsError.value);
+  } finally {
+    privacySettingsUpdating.value = false;
+  }
+};
+
 // Load linked accounts on mount
 onMounted(() => {
   checkHasPassword();
   loadCookieConsent();
   checkTwoFactorStatus();
   loadPasskeys();
+  loadPrivacySettings();
 });
 
 // Redirect if not logged in

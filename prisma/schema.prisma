@@ -21,6 +21,10 @@ model User {
   updatedAt     DateTime  @updatedAt
   twoFactorEnabled Boolean @default(false)
   
+  // 强化隐私保护设置
+  enhancedPrivacyEnabled Boolean @default(false) // 是否启用强化隐私保护
+  privacyVerifyDuration  Int     @default(10)    // 免验证时长（分钟），默认10分钟
+  
   // Relations
   sessions             Session[]
   accounts             Account[]
@@ -32,6 +36,25 @@ model User {
   vitalSignReminders   VitalSignReminder[]
   loginHistory         LoginHistory[]
   trustedDevices       TrustedDevice[]
+  privacyVerifications PrivacyVerification[]
+}
+
+// 隐私验证记录表
+model PrivacyVerification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  verifyType  String   // 验证类型: totp, passkey, backup_code
+  verifiedAt  DateTime @default(now()) // 验证时间
+  expiresAt   DateTime // 过期时间
+  sessionId   String?  // 关联的会话ID
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([sessionId])
 }
 
 model Session {

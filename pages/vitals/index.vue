@@ -1,33 +1,54 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <h1 class="text-3xl font-bold">健康监测</h1>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button 
-          v-if="vitalsData.length > 0"
-          @click="exportToPDF"
-          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
-        >
-          ↓ 导出PDF
-        </button>
-        <button 
-          @click="openAddReminderModal"
-          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
-        >
-          + 添加监测提醒
-        </button>
-        <button 
-          @click="openAddModal"
-          class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
-        >
-          + 添加监测记录
-        </button>
-      </div>
+    <!-- Privacy Protection Verification Loading -->
+    <div v-if="privacyLoading" class="bg-white rounded-md-lg shadow-md p-16 text-center">
+      <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+      <p class="mt-4 text-gray-600">正在验证访问权限...</p>
     </div>
 
-    <!-- 过滤器 -->
-    <div class="bg-white rounded-md-lg shadow-md p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Privacy Verification Required -->
+    <div v-else-if="requiresVerification && !isPrivacyVerified" class="bg-white rounded-md-lg shadow-md p-16 text-center">
+      <div class="text-6xl mb-4">🔐</div>
+      <h2 class="text-xl font-semibold text-gray-900 mb-2">需要身份验证</h2>
+      <p class="text-gray-600 mb-6">此页面受强化隐私保护，请验证您的身份以继续访问</p>
+      <button 
+        @click="showVerifyDialog = true"
+        class="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+      >
+        验证身份
+      </button>
+    </div>
+
+    <!-- Main Content (only show when verified) -->
+    <template v-else>
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 class="text-3xl font-bold">健康监测</h1>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button 
+            v-if="vitalsData.length > 0"
+            @click="handleExportPDF"
+            class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          >
+            ↓ 导出PDF
+          </button>
+          <button 
+            @click="openAddReminderModal"
+            class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          >
+            + 添加监测提醒
+          </button>
+          <button 
+            @click="openAddModal"
+            class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          >
+            + 添加监测记录
+          </button>
+        </div>
+      </div>
+
+      <!-- 过滤器 -->
+      <div class="bg-white rounded-md-lg shadow-md p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium mb-1">体征类型</label>
           <select
@@ -274,15 +295,32 @@
       @close="closeReminderModal"
       @success="handleSuccess"
     />
+    </template>
+
+    <!-- Privacy Verify Dialog -->
+    <PrivacyVerifyDialog
+      :is-open="showVerifyDialog"
+      :has-two-factor="privacySettings?.hasTwoFactor || false"
+      :has-passkey="privacySettings?.hasPasskey || false"
+      @close="showVerifyDialog = false"
+      @verified="handlePrivacyVerified"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { VitalSign, VitalSignReminder, VitalSignReferenceRange } from '~/types'
+import type { VitalSign, VitalSignReminder, VitalSignReferenceRange, PrivacySettings } from '~/types'
 
 useHead({
   title: '健康监测'
 })
+
+// Privacy protection state
+const privacyLoading = ref(true)
+const requiresVerification = ref(false)
+const isPrivacyVerified = ref(false)
+const showVerifyDialog = ref(false)
+const privacySettings = ref<PrivacySettings | null>(null)
 
 // 状态
 const loading = ref(true)
@@ -376,6 +414,50 @@ const getFrequencyText = (frequency: string) => {
     monthly: '每月'
   }
   return map[frequency] || frequency
+}
+
+// Check privacy status on mount
+const checkPrivacyStatus = async () => {
+  privacyLoading.value = true
+  
+  try {
+    // First load privacy settings
+    const settingsRes = await $fetch('/api/user/privacy-settings')
+    if ((settingsRes as any).success) {
+      privacySettings.value = (settingsRes as any).data
+    }
+
+    // Then check verification status
+    const statusRes = await $fetch('/api/user/privacy-status')
+    const data = (statusRes as any).data
+
+    if (!data.requiresVerification) {
+      // Privacy protection not enabled
+      requiresVerification.value = false
+      isPrivacyVerified.value = true
+    } else if (data.isVerified) {
+      // Already verified
+      requiresVerification.value = true
+      isPrivacyVerified.value = true
+    } else {
+      // Needs verification
+      requiresVerification.value = true
+      isPrivacyVerified.value = false
+    }
+  } catch (error) {
+    console.error('Error checking privacy status:', error)
+    // On error, allow access (don't block)
+    isPrivacyVerified.value = true
+  } finally {
+    privacyLoading.value = false
+  }
+}
+
+const handlePrivacyVerified = async () => {
+  showVerifyDialog.value = false
+  isPrivacyVerified.value = true
+  // Load data after verification
+  await loadData()
 }
 
 // 加载数据
@@ -537,13 +619,40 @@ const exportToPDF = async () => {
   }
 }
 
+// Handle export with privacy check
+const handleExportPDF = async () => {
+  // If privacy protection is enabled, check verification status
+  if (requiresVerification.value) {
+    try {
+      const statusRes = await $fetch('/api/user/privacy-status')
+      const data = (statusRes as any).data
+      
+      if (data.requiresVerification && !data.isVerified) {
+        // Need to verify again for export
+        showVerifyDialog.value = true
+        return
+      }
+    } catch (error) {
+      console.error('Error checking privacy status for export:', error)
+    }
+  }
+  
+  // Proceed with export
+  await exportToPDF()
+}
+
 // 监听体征类型变化,自动刷新数据
 watch(() => filters.type, () => {
-  loadData()
+  if (isPrivacyVerified.value) {
+    loadData()
+  }
 })
 
 // 页面加载时获取数据
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await checkPrivacyStatus()
+  if (isPrivacyVerified.value) {
+    await loadData()
+  }
 })
 </script>
