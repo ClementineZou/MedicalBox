@@ -105,18 +105,16 @@
                   <input
                     v-model="totpCode"
                     type="text"
-                    inputmode="numeric"
                     maxlength="6"
                     pattern="[0-9]{6}"
                     placeholder="000000"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center text-2xl tracking-widest focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    @input="onTotpInput"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center text-lg tracking-widest focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     @keyup.enter="verifyWithTotp"
                   />
                   <button
                     @click="verifyWithTotp"
                     :disabled="loading || totpCode.length !== 6"
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
                   >
                     验证
                   </button>
@@ -240,14 +238,6 @@ const verifyWithPasskey = async () => {
   } finally {
     loading.value = false;
   }
-};
-
-// 过滤 TOTP 输入，只允许数字
-const onTotpInput = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  // 只保留数字
-  input.value = input.value.replace(/\D/g, '');
-  totpCode.value = input.value;
 };
 
 const verifyWithTotp = async () => {
