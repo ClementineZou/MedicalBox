@@ -1,8 +1,17 @@
 import type { Medicine } from '~/types'
 
+// 黑白版项目图标 SVG (base64编码)
+const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="76.8" fill="white" stroke="black" stroke-width="20"/>
+  <g fill="black">
+    <rect x="217.6" y="96" width="76.8" height="320" rx="7.68"/>
+    <rect x="96" y="217.6" width="320" height="76.8" rx="7.68"/>
+  </g>
+</svg>`
+
 /**
  * 导出药品标签为PDF
- * 设计现代简约的标签，每页A4纸可打印多个标签
+ * 黑白简约设计，适合打印
  * 标签尺寸: 90mm x 50mm (适合常见药盒)
  */
 export const exportMedicineLabels = async (medicines: Medicine[]) => {
@@ -16,7 +25,7 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
   const labelsPerColumn = 5
   const labelsPerPage = labelsPerRow * labelsPerColumn
   
-  // 构建打印样式
+  // 构建打印样式 - 全黑白设计
   const styles = `
     <style>
       @page {
@@ -34,6 +43,7 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
         background: #fff;
         padding: 0;
+        color: #000;
       }
       
       .page {
@@ -55,8 +65,8 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       .label {
         width: 90mm;
         min-height: 50mm;
-        border: 2px solid #2563eb;
-        border-radius: 4px;
+        border: 1.5px solid #000;
+        border-radius: 2px;
         padding: 4mm;
         display: flex;
         flex-direction: column;
@@ -66,150 +76,150 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         page-break-inside: avoid;
       }
       
+      .label-icon {
+        position: absolute;
+        top: 3mm;
+        right: 3mm;
+        width: 8mm;
+        height: 8mm;
+      }
+      
+      .label-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      
       .label-header {
         margin-bottom: 2mm;
+        padding-right: 10mm;
       }
       
       .medicine-name {
-        font-size: 16pt;
-        font-weight: bold;
-        color: #1e40af;
+        font-size: 14pt;
+        font-weight: 700;
+        color: #000;
         margin-bottom: 1mm;
         line-height: 1.2;
         max-height: 10mm;
         overflow: hidden;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 1mm;
       }
       
       .medicine-brand {
         font-size: 9pt;
-        color: #666;
+        color: #333;
         margin-bottom: 1mm;
+        font-style: italic;
       }
       
       .label-body {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 1mm;
+        gap: 0.8mm;
         min-height: 0;
+      }
+      
+      .badges-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5mm;
+        margin-bottom: 1.5mm;
       }
       
       .info-row {
         display: flex;
         align-items: flex-start;
         font-size: 9pt;
-        line-height: 1.2;
+        line-height: 1.3;
         margin-bottom: 0;
       }
       
       .info-label {
-        color: #666;
+        color: #000;
         min-width: 18mm;
-        font-weight: 500;
+        font-weight: 600;
         flex-shrink: 0;
       }
       
       .info-value {
         color: #000;
-        font-weight: 600;
+        font-weight: 400;
         flex: 1;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        line-height: 1.2;
-        max-height: calc(1.2em * 2);
+        line-height: 1.3;
+        max-height: calc(1.3em * 2);
       }
       
       .expiry-warning {
-        color: #dc2626;
-        font-weight: bold;
-      }
-      
-      .expiry-warning {
-        color: #d93025;
-        font-weight: bold;
+        font-weight: 700;
+        text-decoration: underline;
       }
       
       .category-badge {
         display: inline-block;
-        background: #dbeafe;
-        color: #1e40af;
-        padding: 1mm 2mm;
-        border-radius: 2mm;
-        font-size: 8pt;
+        background: #fff;
+        color: #000;
+        padding: 0.8mm 2mm;
+        border-radius: 1mm;
+        font-size: 7pt;
         font-weight: 600;
-        margin-top: 1.5mm;
-        margin-bottom: 1mm;
-        border: 1px solid #93c5fd;
+        border: 1px solid #000;
       }
       
       .control-type-badge {
         display: inline-block;
-        padding: 1mm 2.5mm;
-        border-radius: 2mm;
-        font-size: 8pt;
+        padding: 0.8mm 2mm;
+        border-radius: 1mm;
+        font-size: 7pt;
         font-weight: 700;
-        margin-bottom: 1mm;
+        border: 1px solid #000;
+        background: #fff;
+        color: #000;
       }
       
       .control-type-prescription {
-        background: #fed7aa;
-        color: #9a3412;
-        border: 1.5px solid #fb923c;
+        background: #fff;
+        border-style: dashed;
       }
       
       .control-type-otc {
-        background: #bbf7d0;
-        color: #166534;
-        border: 1.5px solid #4ade80;
+        background: #fff;
       }
       
       .control-type-psychotropic {
-        background: #dc2626;
+        background: #000;
         color: #fff;
-        border: 1.5px solid #991b1b;
+        border: 1.5px solid #000;
       }
       
       .date-field {
         margin-top: auto;
-        margin-bottom: 2mm;
-        padding-top: 5mm;
-        border-top: 1px solid #e5e7eb;
+        margin-bottom: 0;
+        padding-top: 2mm;
+        border-top: 1px solid #000;
         display: flex;
         align-items: center;
         gap: 2mm;
-        min-height: 7mm;
+        min-height: 6mm;
         flex-shrink: 0;
       }
       
       .date-label {
-        font-size: 10pt;
+        font-size: 9pt;
         color: #000;
-        font-weight: 700;
+        font-weight: 600;
         white-space: nowrap;
       }
       
       .date-input {
         flex: 1;
-        border-bottom: 1px solid #999;
-        height: 5mm;
-      }
-      
-      .qr-placeholder {
-        position: absolute;
-        bottom: 4mm;
-        right: 4mm;
-        width: 12mm;
-        height: 12mm;
-        border: 1px dashed #ccc;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 6pt;
-        color: #ccc;
-        background: white;
-        border-radius: 1mm;
+        border-bottom: 1px solid #000;
+        height: 4mm;
       }
       
       @media print {
@@ -303,9 +313,6 @@ function generateLabelHTML(medicine: Medicine): string {
     ? `${medicine.dosage}${medicine.dosageUnit || ''}`
     : '-'
   
-  // 库存信息
-  const quantityInfo = `${medicine.quantity}${medicine.quantityUnit || ''}`
-  
   // 用法用量
   const usageInfo = medicine.usage || '-'
   
@@ -327,16 +334,30 @@ function generateLabelHTML(medicine: Medicine): string {
     controlTypeBadge = `<span class="${badgeClass}">${displayText}</span>`
   }
   
+  // 分类徽章
+  const categoryBadge = medicine.category 
+    ? `<span class="category-badge">${medicine.category}</span>` 
+    : ''
+
   return `
     <div class="label">
+      <div class="label-icon">
+        ${ICON_SVG}
+      </div>
+      
       <div class="label-header">
         <div class="medicine-name">${medicine.name}</div>
         ${medicine.brand ? `<div class="medicine-brand">${medicine.brand}</div>` : ''}
-        ${medicine.category ? `<span class="category-badge">${medicine.category}</span>` : ''}
-        ${controlTypeBadge}
       </div>
       
       <div class="label-body">
+        ${(categoryBadge || controlTypeBadge) ? `
+        <div class="badges-row">
+          ${categoryBadge}
+          ${controlTypeBadge}
+        </div>
+        ` : ''}
+        
         <div class="info-row">
           <span class="info-label">规格:</span>
           <span class="info-value">${dosageInfo}</span>
@@ -354,7 +375,7 @@ function generateLabelHTML(medicine: Medicine): string {
         
         <div class="info-row">
           <span class="info-label">有效期:</span>
-          <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}</span>
+          <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}${isExpiring ? ' ⚠' : ''}</span>
         </div>
         
         <div class="date-field">
