@@ -1,25 +1,25 @@
 <template>
   <div class="space-y-6">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
       <h1 class="text-3xl font-bold">药品管理</h1>
-      <div class="flex gap-3">
+      <div class="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
         <button 
           v-if="medicines.length > 0"
           @click="exportToPDF"
-          class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
         >
           📄 导出清单
         </button>
         <button 
           v-if="medicines.length > 0"
           @click="toggleLabelMode"
-          class="bg-md-tertiary text-md-on-tertiary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-tertiary text-md-on-tertiary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
         >
           🏷️ {{ isLabelMode ? '取消选择' : '导出标签' }}
         </button>
         <button 
           @click="openAddModal"
-          class="bg-md-primary text-md-on-primary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-primary text-md-on-primary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity col-span-2 sm:col-span-1 flex justify-center items-center"
         >
           + 添加药品
         </button>

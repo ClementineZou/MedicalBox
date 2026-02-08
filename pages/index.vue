@@ -27,22 +27,22 @@
           注册
         </NuxtLink>
       </div>
-      <div v-else class="flex gap-4 justify-center flex-wrap">
+      <div v-else class="grid grid-cols-1 sm:flex sm:justify-center gap-4">
         <NuxtLink 
           to="/medicines" 
-          class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
         >
           管理药品
         </NuxtLink>
         <NuxtLink 
           to="/reminders" 
-          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
         >
           设置提醒
         </NuxtLink>
         <NuxtLink 
           to="/vitals" 
-          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+          class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
         >
           健康监测
         </NuxtLink>

@@ -21,25 +21,25 @@
 
     <!-- Main Content (only show when verified) -->
     <template v-else>
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 class="text-3xl font-bold">健康监测</h1>
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
           <button 
             v-if="vitalsData.length > 0"
             @click="handleExportPDF"
-            class="bg-md-secondary text-md-on-secondary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+            class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
           >
             ↓ 导出PDF
           </button>
           <button 
             @click="openAddReminderModal"
-            class="bg-md-tertiary text-md-on-tertiary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+            class="bg-md-tertiary text-md-on-tertiary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
           >
-            + 添加监测提醒
+            + 监测提醒
           </button>
           <button 
             @click="openAddModal"
-            class="bg-md-primary text-md-on-primary px-6 py-3 rounded-md-md hover:opacity-90 transition-opacity"
+            class="bg-md-primary text-md-on-primary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity col-span-2 sm:col-span-1 flex justify-center items-center"
           >
             + 添加监测记录
           </button>
