@@ -13,51 +13,89 @@
         
         <div class="space-y-6">
           <!-- Avatar -->
-          <div class="flex items-center space-x-4">
-            <img 
-              v-if="gravatarUrl"
-              :src="gravatarUrl" 
-              :alt="user?.name || 'User avatar'"
-              class="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-            />
-            <div 
-              v-else
-              class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold"
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <img 
+                v-if="gravatarUrl"
+                :src="gravatarUrl" 
+                :alt="user?.name || 'User avatar'"
+                class="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+              />
+              <div 
+                v-else
+                class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold"
+              >
+                {{ userInitial }}
+              </div>
+              <div>
+                <h3 class="text-lg font-medium text-gray-900">{{ user?.name || '未设置姓名' }}</h3>
+                <p class="text-sm text-gray-600">{{ user?.email }}</p>
+              </div>
+            </div>
+
+            <!-- Edit Button moved here -->
+            <button 
+                v-if="!isEditing"
+                @click="startEditing"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
             >
-              {{ userInitial }}
-            </div>
-            <div>
-              <h3 class="text-lg font-medium text-gray-900">{{ user?.name || '未设置姓名' }}</h3>
-              <p class="text-sm text-gray-600">{{ user?.email }}</p>
-            </div>
+              <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              编辑资料
+            </button>
           </div>
 
-          <!-- User Info -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">姓名</label>
-              <p class="text-gray-900">{{ user?.name || '未设置' }}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
-              <p class="text-gray-900">{{ user?.email }}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">账户创建时间</label>
-              <p class="text-gray-900">{{ formatDate(user?.createdAt) }}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">邮箱验证状态</label>
-              <span v-if="user?.emailVerified" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                已验证
-              </span>
-              <span v-else class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                未验证
-              </span>
-            </div>
+          <!-- Edit Form -->
+          <div v-if="isEditing" class="mt-6">
+            <form @submit.prevent="handleUpdateProfile" class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+                  <input
+                    id="name"
+                    v-model="editName"
+                    type="text"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入姓名"
+                  />
+                </div>
+                <div>
+                  <label for="email" class="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+                  <input
+                    id="email"
+                    v-model="editEmail"
+                    type="email"
+                    required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="请输入邮箱"
+                  />
+                </div>
+              </div>
+              
+              <div v-if="updateProfileError" class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {{ updateProfileError }}
+              </div>
+
+              <div class="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  @click="cancelEditing"
+                  class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all"
+                  :disabled="updateProfileLoading"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  class="bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  :disabled="updateProfileLoading"
+                >
+                  <span v-if="updateProfileLoading">保存中...</span>
+                  <span v-else>保存修改</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -765,6 +803,79 @@ const twoFactorQrCode = ref("");
 const twoFactorSecret = ref("");
 const twoFactorVerifyCode = ref("");
 const twoFactorBackupCodes = ref<string[]>([]);
+
+// Profile Edit state
+const isEditing = ref(false);
+const editName = ref("");
+const editEmail = ref("");
+const updateProfileLoading = ref(false);
+const updateProfileSuccess = ref("");
+const updateProfileError = ref("");
+
+// Initialize edit form data when user data is available
+watchEffect(() => {
+  if (user.value && !isEditing.value) {
+    editName.value = user.value.name || "";
+    editEmail.value = user.value.email || "";
+  }
+});
+
+const startEditing = () => {
+  if (user.value) {
+    editName.value = user.value.name || "";
+    editEmail.value = user.value.email || "";
+    isEditing.value = true;
+    updateProfileSuccess.value = "";
+    updateProfileError.value = "";
+  }
+};
+
+const cancelEditing = () => {
+  isEditing.value = false;
+  if (user.value) {
+    editName.value = user.value.name || "";
+    editEmail.value = user.value.email || "";
+  }
+  updateProfileError.value = "";
+};
+
+const handleUpdateProfile = async () => {
+  updateProfileLoading.value = true;
+  updateProfileError.value = "";
+  updateProfileSuccess.value = "";
+
+  try {
+    const response = await $fetch('/api/user/update-profile', {
+      method: 'PUT',
+      body: {
+        name: editName.value,
+        email: editEmail.value
+      }
+    });
+
+    if ((response as any).success) {
+      updateProfileSuccess.value = (response as any).message || "个人信息更新成功";
+      const { success } = useNotification();
+      success(updateProfileSuccess.value);
+      isEditing.value = false;
+      
+      // Reload page to refresh session data fully if email changed
+      if (user.value?.email !== editEmail.value) {
+          setTimeout(() => {
+              window.location.reload();
+          }, 1000);
+      }
+    }
+  } catch (e: any) {
+    console.error("Failed to update profile:", e);
+    updateProfileError.value = e.data?.statusMessage || e.message || "更新失败";
+    const { error: showError } = useNotification();
+    showError(updateProfileError.value);
+  } finally {
+    updateProfileLoading.value = false;
+  }
+};
+
 const showPasswordPrompt = ref(false);
 const passwordPromptAction = ref<'enable' | 'disable'>('enable');
 const passwordPromptLoading = ref(false);
@@ -1472,7 +1583,7 @@ const loadPrivacySettings = async () => {
     privacySettingsError.value = '加载隐私设置失败';
   } finally {
     privacySettingsLoading.value = false;
-  }
+ }
 };
 
 const togglePrivacyProtection = async () => {
