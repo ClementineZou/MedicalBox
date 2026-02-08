@@ -15,6 +15,13 @@ const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" 
  * 标签尺寸: 90mm x 50mm (适合常见药盒)
  */
 export const exportMedicineLabels = async (medicines: Medicine[]) => {
+  // 仅在客户端需要条形码渲染
+  let JsBarcode: any
+  if (typeof window !== 'undefined') {
+    const mod = await import('jsbarcode')
+    JsBarcode = (mod as any).default || mod
+  }
+
   // A4纸尺寸：210mm x 297mm
   // 标签尺寸：90mm x 50mm，间距5mm
   // 每行可放2个标签 (90*2 + 5*3 = 195mm)
@@ -65,8 +72,8 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       .label {
         width: 90mm;
         min-height: 50mm;
-        border: 1.5px solid #000;
-        border-radius: 2px;
+        border: 2px solid #000;
+        border-radius: 4px;
         padding: 4mm;
         display: flex;
         flex-direction: column;
@@ -82,6 +89,7 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         right: 3mm;
         width: 8mm;
         height: 8mm;
+        opacity: 0.8;
       }
       
       .label-icon svg {
@@ -92,54 +100,63 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       .label-header {
         margin-bottom: 2mm;
         padding-right: 10mm;
+        border-bottom: 2px solid #000;
+        padding-bottom: 2mm;
       }
       
       .medicine-name {
-        font-size: 14pt;
-        font-weight: 700;
+        font-size: 15pt;
+        font-weight: 800;
         color: #000;
         margin-bottom: 1mm;
         line-height: 1.2;
-        max-height: 10mm;
+        max-height: 12mm;
         overflow: hidden;
-        border-bottom: 1.5px solid #000;
-        padding-bottom: 1mm;
       }
       
       .medicine-brand {
         font-size: 9pt;
         color: #333;
-        margin-bottom: 1mm;
-        font-style: italic;
+        font-weight: 500;
+        font-style: normal;
       }
       
       .label-body {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.8mm;
+        gap: 0;
         min-height: 0;
       }
       
       .badges-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 1.5mm;
-        margin-bottom: 1.5mm;
+        gap: 2mm;
+        padding-bottom: 2mm;
+        border-bottom: none;
+        margin-bottom: 0;
+        align-items: center;
+        min-height: 6mm;
       }
       
       .info-row {
         display: flex;
         align-items: flex-start;
         font-size: 9pt;
-        line-height: 1.3;
-        margin-bottom: 0;
+        line-height: 1.4;
+        padding: 1.5mm 0;
+        border-bottom: none;
+      }
+
+      .info-row:last-child {
+        border-bottom: none;
       }
       
       .info-label {
         color: #000;
-        min-width: 18mm;
-        font-weight: 600;
+        min-width: 16mm;
+        font-weight: 700;
         flex-shrink: 0;
       }
       
@@ -151,44 +168,38 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        line-height: 1.3;
-        max-height: calc(1.3em * 2);
+        max-height: calc(1.4em * 2);
       }
       
       .expiry-warning {
-        font-weight: 700;
-        text-decoration: underline;
+        font-weight: 800;
+        border-bottom: 1px solid #000;
       }
       
-      .category-badge {
-        display: inline-block;
-        background: #fff;
-        color: #000;
-        padding: 0.8mm 2mm;
-        border-radius: 1mm;
-        font-size: 7pt;
+      .category-badge, .control-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 1.5mm;
+        height: 4.5mm;
+        border-radius: 2px;
+        font-size: 8pt;
         font-weight: 600;
         border: 1px solid #000;
+        line-height: 1;
       }
-      
+
       .control-type-badge {
-        display: inline-block;
-        padding: 0.8mm 2mm;
-        border-radius: 1mm;
-        font-size: 7pt;
         font-weight: 700;
-        border: 1px solid #000;
-        background: #fff;
-        color: #000;
       }
       
       .control-type-prescription {
         background: #fff;
-        border-style: dashed;
+        border-style: solid;
       }
       
       .control-type-otc {
         background: #fff;
+        border-radius: 50px;
       }
       
       .control-type-psychotropic {
@@ -196,30 +207,62 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         color: #fff;
         border: 1.5px solid #000;
       }
+
+      .label-footer {
+        margin-top: auto;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1mm;
+      }
       
       .date-field {
-        margin-top: auto;
+        margin-top: 1mm;
         margin-bottom: 0;
         padding-top: 2mm;
-        border-top: 1px solid #000;
+        border-top: 2px solid #000;
         display: flex;
-        align-items: center;
+        align-items: flex-end;
         gap: 2mm;
         min-height: 6mm;
         flex-shrink: 0;
+      }
+
+      .barcode-field {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5mm;
+        margin-top: 1mm;
+      }
+
+      .barcode-svg {
+        height: 8mm;
+        width: auto;
+        max-width: 60mm;
+      }
+
+      .barcode-text {
+        font-size: 8pt;
+        font-family: monospace;
+        font-weight: 600;
+        color: #000;
       }
       
       .date-label {
         font-size: 9pt;
         color: #000;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
+        margin-bottom: 1mm;
       }
       
       .date-input {
         flex: 1;
         border-bottom: 1px solid #000;
-        height: 4mm;
+        height: 5mm;
+        margin-bottom: 1mm;
       }
       
       @media print {
@@ -254,7 +297,9 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
     
     for (let i = startIndex; i < endIndex; i++) {
       const medicine = medicines[i]
-      html += generateLabelHTML(medicine)
+      const code = medicine.barcode || medicine.id
+      const barcodeSvg = JsBarcode ? generateBarcodeSvg(JsBarcode, code) : ''
+      html += generateLabelHTML(medicine, { barcodeCode: code, barcodeSvg })
     }
     
     html += '</div>'
@@ -294,7 +339,13 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
 /**
  * 生成单个药品标签的HTML
  */
-function generateLabelHTML(medicine: Medicine): string {
+function generateLabelHTML(
+  medicine: Medicine,
+  barcode?: {
+    barcodeCode: string
+    barcodeSvg: string
+  }
+): string {
   // 判断是否即将过期（30天内）
   const expiryDate = new Date(medicine.expiryDate)
   const today = new Date()
@@ -378,13 +429,38 @@ function generateLabelHTML(medicine: Medicine): string {
           <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}${isExpiring ? ' ⚠' : ''}</span>
         </div>
         
-        <div class="date-field">
-          <span class="date-label">开启日期:</span>
-          <div class="date-input"></div>
+        <div class="label-footer">
+          <div class="date-field">
+            <span class="date-label">开启日期:</span>
+            <div class="date-input"></div>
+          </div>
+
+          <div class="barcode-field">
+            ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
+            <div class="barcode-text">${barcode?.barcodeCode || ''}</div>
+          </div>
         </div>
       </div>
     </div>
   `
+}
+
+function generateBarcodeSvg(JsBarcode: any, value: string): string {
+  const svgNS = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(svgNS, 'svg')
+  svg.setAttribute('xmlns', svgNS)
+
+  JsBarcode(svg, value, {
+    format: 'CODE128',
+    displayValue: false,
+    lineColor: '#000000',
+    background: '#ffffff',
+    margin: 0,
+    width: 2,
+    height: 40
+  })
+
+  return new XMLSerializer().serializeToString(svg)
 }
 
 /**

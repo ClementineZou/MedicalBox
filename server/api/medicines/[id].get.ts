@@ -1,4 +1,5 @@
 import prisma from '~/server/utils/prisma'
+import { ensureMedicineBarcode } from '~/server/utils/barcode'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const medicine = await prisma.medicine.findFirst({
+    let medicine = await prisma.medicine.findFirst({
       where: {
         id,
         userId // Ensure user owns this medicine
@@ -28,6 +29,12 @@ export default defineEventHandler(async (event) => {
         }
       }
     })
+
+    // 自动回填缺失条形码
+    if (medicine && !(medicine as any).barcode) {
+      const barcode = await ensureMedicineBarcode(prisma, medicine.id, userId)
+      if (barcode) (medicine as any).barcode = barcode
+    }
 
     if (!medicine) {
       return {

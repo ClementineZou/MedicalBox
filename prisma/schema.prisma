@@ -173,6 +173,7 @@ model TrustedDevice {
 // 药物信息表
 model Medicine {
   id          String   @id @default(cuid())
+  barcode     String?  @unique // 条形码（自动生成，唯一）
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   

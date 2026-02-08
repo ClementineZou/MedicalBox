@@ -1,6 +1,7 @@
 // 药品信息类型
 export interface Medicine {
   id: string
+  barcode?: string
   name: string
   brand: string
   category?: string
