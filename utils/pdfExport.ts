@@ -2,95 +2,154 @@ import html2canvas from 'html2canvas'
 import type { MedicineUsageRecord, VitalSign, Medicine } from '~/types'
 
 /**
- * 创建打印样式
+ * 创建打印样式 - 黑白极简设计 (参考药品标签风格)
  */
 const getPrintStyles = () => `
   <style>
     @media print {
       @page {
         size: A4;
-        margin: 20mm;
+        margin: 15mm;
       }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
         color: #000;
         background: #fff;
+        line-height: 1.4;
       }
       .page-break {
         page-break-after: always;
       }
+      
+      /* Header Design */
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #000;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+      .header-title-section {
+        display: flex;
+        flex-direction: column;
+      }
+      .header-title {
+        font-size: 24pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .header-subtitle {
+        font-size: 10pt;
+        font-weight: normal;
+        margin-top: 5px;
+        color: #333;
+      }
+      .header-logo {
+        width: 40px;
+        height: 40px;
+      }
+      
+      /* Info Box */
+      .info-box {
+        border: 1px solid #000;
+        padding: 10px;
+        margin-bottom: 20px;
+        font-size: 10pt;
+        background-color: #fcfcfc;
+      }
+      .info-row {
+        display: flex;
+        margin-bottom: 5px;
+      }
+      .info-row:last-child {
+        margin-bottom: 0;
+      }
+      .info-label {
+        font-weight: bold;
+        width: 80px;
+        flex-shrink: 0;
+      }
+      
+      /* Table Design */
       table {
         width: 100%;
         border-collapse: collapse;
         margin: 20px 0;
+        border: 2px solid #000;
       }
       th, td {
-        border: 1px solid #ccc;
-        padding: 8px;
+        border: 1px solid #000;
+        padding: 8px 10px;
         text-align: left;
         font-size: 10pt;
       }
       th {
-        background-color: #4285f4;
-        color: white;
+        background-color: #f0f0f0;
+        color: #000;
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 9pt;
+      }
+      tr:nth-child(even) {
+        background-color: #fafafa;
+      }
+      
+      /* Status Indicators - Black & White optimized */
+      .status-text {
         font-weight: bold;
       }
-      .header {
-        text-align: center;
-        font-size: 18pt;
+      .warning-text {
         font-weight: bold;
-        margin-bottom: 20px;
+        text-decoration: underline;
       }
-      .info {
-        font-size: 10pt;
-        margin-bottom: 15px;
-        line-height: 1.6;
-      }
-      .side-effect {
-        color: #dc2626;
-        font-weight: bold;
-      }
-      .abnormal {
-        color: #dc2626;
-        font-weight: bold;
-      }
-      .expiring {
-        color: #dc2626;
-        font-weight: bold;
-      }
+      
+      /* Chart */
       .chart-image {
         max-width: 100%;
         margin: 20px 0;
+        border: 1px solid #000;
+        filter: grayscale(100%) contrast(120%);
       }
+      
+      /* Footer */
       .footer {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 2px solid #4285f4;
+        margin-top: 30px;
+        padding-top: 10px;
+        border-top: 1px solid #000;
         text-align: center;
-        font-size: 9pt;
-        color: #666;
+        font-size: 8pt;
+        color: #000;
       }
-      .footer .app-name {
-        font-size: 14pt;
-        font-weight: bold;
-        color: #4285f4;
-        margin-bottom: 5px;
-      }
-      .footer .slogan {
-        font-style: italic;
-        color: #888;
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
     }
   </style>
 `
+
+// 黑白版项目图标 SVG (base64编码) 用于头部
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="76.8" fill="white" stroke="black" stroke-width="20"/>
+  <g fill="black">
+    <rect x="217.6" y="96" width="76.8" height="320" rx="7.68"/>
+    <rect x="96" y="217.6" width="320" height="76.8" rx="7.68"/>
+  </g>
+</svg>`
 
 /**
  * 获取项目信息footer
  */
 const getFooter = () => `
   <div class="footer">
-    <div class="app-name">💊 MedicalBox - 智能家庭药箱管理系统</div>
-    <div class="slogan">让用药更安全，让健康更可控</div>
+    <div class="footer-content">
+      <span>MedicalBox 智能家庭药箱管理系统</span>
+      <span>第 1 页</span>
+    </div>
   </div>
 `
 
@@ -124,38 +183,61 @@ export const exportMedicineRecordsToPDF = async (
   let html = getPrintStyles()
   
   html += `
-    <div class="header">用药记录</div>
-    <div class="info">
+    <div class="header-container">
+      <div class="header-title-section">
+        <h1 class="header-title">用药记录</h1>
+        <span class="header-subtitle">MEDICINE USAGE RECORD</span>
+      </div>
+      <div class="header-logo">${LOGO_SVG}</div>
+    </div>
+    
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">导出时间:</span>
+        <span>${new Date().toLocaleString('zh-CN')}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">记录总数:</span>
+        <span>${records.length} 条</span>
+      </div>
   `
   
   if (filters.medicineId || filters.dateFrom || filters.dateTo) {
-    html += '<strong>筛选条件:</strong><br>'
-    
     if (filters.medicineId) {
       const medicine = records[0]?.medicine
-      html += `&nbsp;&nbsp;药品: ${medicine?.name || '未知'}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">特定药品:</span>
+          <span>${medicine?.name || '未知'}</span>
+        </div>`
     }
     
     if (filters.dateFrom || filters.dateTo) {
-      html += `&nbsp;&nbsp;日期范围: ${filters.dateFrom || '不限'} 至 ${filters.dateTo || '不限'}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">日期范围:</span>
+          <span>${filters.dateFrom || '不限'} 至 ${filters.dateTo || '不限'}</span>
+        </div>`
     }
   } else {
-    html += '<strong>导出范围:</strong> 全部记录<br>'
+    html += `
+      <div class="info-row">
+        <span class="info-label">导出范围:</span>
+        <span>全部记录</span>
+      </div>`
   }
   
   html += `
-      <strong>导出时间:</strong> ${new Date().toLocaleString('zh-CN')}<br>
-      <strong>共 ${records.length} 条记录</strong>
     </div>
     
     <table>
       <thead>
         <tr>
           <th>药品名称</th>
-          <th>剂量</th>
+          <th>服用剂量</th>
           <th>服用时间</th>
+          <th>副作用/异常</th>
           <th>备注</th>
-          <th>副作用</th>
         </tr>
       </thead>
       <tbody>
@@ -163,9 +245,9 @@ export const exportMedicineRecordsToPDF = async (
   
   records.forEach(record => {
     const sideEffect = record.sideEffectNotes || '-'
-    const sideEffectClass = record.sideEffectNotes ? ' class="side-effect"' : ''
+    const sideEffectClass = record.sideEffectNotes ? ' class="warning-text"' : ''
     
-    // 构建剂量显示：服用剂量（计算后的总剂量）
+    // 构建剂量显示
     let dosageDisplay = record.dosage || '-'
     if (record.medicine?.dosage && record.medicine?.dosageUnit && record.dosage) {
       const totalDosage = calculateTotalDosage(record.dosage, record.medicine.dosage, record.medicine.dosageUnit)
@@ -174,11 +256,11 @@ export const exportMedicineRecordsToPDF = async (
     
     html += `
       <tr>
-        <td>${record.medicine?.name || '未知药品'}</td>
+        <td><strong>${record.medicine?.name || '未知药品'}</strong></td>
         <td>${dosageDisplay}</td>
         <td>${new Date(record.usageTime).toLocaleString('zh-CN')}</td>
-        <td>${record.notes || '-'}</td>
         <td${sideEffectClass}>${sideEffect}</td>
+        <td>${record.notes || '-'}</td>
       </tr>
     `
   })
@@ -218,13 +300,26 @@ export const exportVitalSignsToPDF = async (
   let html = getPrintStyles()
   
   html += `
-    <div class="header">健康监测记录</div>
-    <div class="info">
+    <div class="header-container">
+      <div class="header-title-section">
+        <h1 class="header-title">健康监测记录</h1>
+        <span class="header-subtitle">VITAL SIGNS MONITORING</span>
+      </div>
+      <div class="header-logo">${LOGO_SVG}</div>
+    </div>
+    
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">导出时间:</span>
+        <span>${new Date().toLocaleString('zh-CN')}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">记录总数:</span>
+        <span>${vitalSigns.length} 条</span>
+      </div>
   `
   
   if (filters.type || filters.dateFrom || filters.dateTo) {
-    html += '<strong>筛选条件:</strong><br>'
-    
     if (filters.type) {
       const typeNames: Record<string, string> = {
         height: '身高',
@@ -236,21 +331,29 @@ export const exportVitalSignsToPDF = async (
         bloodGlucose: '血糖',
         heartRate: '心率'
       }
-      html += `&nbsp;&nbsp;体征类型: ${typeNames[filters.type] || filters.type}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">体征类型:</span>
+          <span>${typeNames[filters.type] || filters.type}</span>
+        </div>`
     }
     
     if (filters.dateFrom || filters.dateTo) {
-      html += `&nbsp;&nbsp;日期范围: ${filters.dateFrom || '不限'} 至 ${filters.dateTo || '不限'}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">日期范围:</span>
+          <span>${filters.dateFrom || '不限'} 至 ${filters.dateTo || '不限'}</span>
+        </div>`
     }
   } else {
-    html += '<strong>导出范围:</strong> 全部记录<br>'
+    html += `
+      <div class="info-row">
+        <span class="info-label">导出范围:</span>
+        <span>全部记录</span>
+      </div>`
   }
   
-  html += `
-      <strong>导出时间:</strong> ${new Date().toLocaleString('zh-CN')}<br>
-      <strong>共 ${vitalSigns.length} 条记录</strong>
-    </div>
-  `
+  html += `</div>`
   
   // 如果有图表，转换为图片
   let chartImageData = ''
@@ -261,7 +364,7 @@ export const exportVitalSignsToPDF = async (
         scale: 2
       })
       chartImageData = canvas.toDataURL('image/png')
-      html += `<img src="${chartImageData}" class="chart-image" />`
+      html += `<div class="chart-container"><img src="${chartImageData}" class="chart-image" /></div>`
     } catch (error) {
       console.error('Error capturing chart:', error)
     }
@@ -284,7 +387,7 @@ export const exportVitalSignsToPDF = async (
       <thead>
         <tr>
           <th>体征类型</th>
-          <th>数值</th>
+          <th>测量数值</th>
           <th>测量时间</th>
           <th>状态</th>
           <th>备注</th>
@@ -302,11 +405,11 @@ export const exportVitalSignsToPDF = async (
     }
     
     const status = record.isNormal ? '正常' : '异常'
-    const statusClass = record.isNormal ? '' : ' class="abnormal"'
+    const statusClass = record.isNormal ? '' : ' class="warning-text"'
     
     html += `
       <tr>
-        <td>${typeNames[record.type] || record.type}</td>
+        <td><strong>${typeNames[record.type] || record.type}</strong></td>
         <td>${value}</td>
         <td>${new Date(record.measureTime).toLocaleString('zh-CN')}</td>
         <td${statusClass}>${status}</td>
@@ -349,27 +452,50 @@ export const exportMedicinesToPDF = async (
   let html = getPrintStyles()
   
   html += `
-    <div class="header">药品管理</div>
-    <div class="info">
+    <div class="header-container">
+      <div class="header-title-section">
+        <h1 class="header-title">药品清单</h1>
+        <span class="header-subtitle">MEDICINE INVENTORY LIST</span>
+      </div>
+      <div class="header-logo">${LOGO_SVG}</div>
+    </div>
+    
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">导出时间:</span>
+        <span>${new Date().toLocaleString('zh-CN')}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">药品总数:</span>
+        <span>${medicines.length} 种</span>
+      </div>
   `
   
-  if (filters.searchQuery || filters.category) {
-    html += '<strong>筛选条件:</strong><br>'
-    
+  if (filters.searchQuery || filters.category) {    
     if (filters.searchQuery) {
-      html += `&nbsp;&nbsp;搜索关键词: ${filters.searchQuery}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">搜索关键词:</span>
+          <span>${filters.searchQuery}</span>
+        </div>`
     }
     
     if (filters.category) {
-      html += `&nbsp;&nbsp;药品分类: ${filters.category}<br>`
+      html += `
+        <div class="info-row">
+          <span class="info-label">药品分类:</span>
+          <span>${filters.category}</span>
+        </div>`
     }
   } else {
-    html += '<strong>导出范围:</strong> 全部药品<br>'
+    html += `
+      <div class="info-row">
+        <span class="info-label">导出范围:</span>
+        <span>全部药品</span>
+      </div>`
   }
   
   html += `
-      <strong>导出时间:</strong> ${new Date().toLocaleString('zh-CN')}<br>
-      <strong>共 ${medicines.length} 种药品</strong>
     </div>
     
     <table>
@@ -391,7 +517,7 @@ export const exportMedicinesToPDF = async (
     const expiryDate = new Date(medicine.expiryDate)
     const daysUntilExpiry = Math.floor((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     const isExpiring = daysUntilExpiry <= 30 && daysUntilExpiry >= 0
-    const expiryClass = isExpiring ? ' class="expiring"' : ''
+    const expiryClass = isExpiring ? ' class="warning-text"' : ''
     const expiryText = medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString('zh-CN') : '-'
     
     const dosageText = medicine.dosage ? `${medicine.dosage}${medicine.dosageUnit || ''}` : '-'
@@ -399,7 +525,7 @@ export const exportMedicinesToPDF = async (
     
     html += `
       <tr>
-        <td>${medicine.name || '-'}</td>
+        <td><strong>${medicine.name || '-'}</strong></td>
         <td>${medicine.brand || '-'}</td>
         <td>${medicine.category || '-'}</td>
         <td>${dosageText}</td>
