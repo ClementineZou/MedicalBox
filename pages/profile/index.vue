@@ -729,7 +729,7 @@
           <div>
             <h3 class="font-medium text-gray-900 mb-2">删除账户</h3>
             <p class="text-sm text-gray-600 mb-4">
-              删除你的账户将永久删除所有数据，包括药品信息、用药记录、生命体征记录等。此操作不可恢复。
+              删除你的账户将永久删除所有数据，包括医疗急救卡、药品信息、用药记录、生命体征记录等。此操作不可恢复。
             </p>
             <button
               @click="showDeleteDialog = true"

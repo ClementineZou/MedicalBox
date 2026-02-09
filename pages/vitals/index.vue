@@ -29,7 +29,7 @@
             @click="handleExportPDF"
             class="bg-md-secondary text-md-on-secondary px-4 py-3 rounded-md-md hover:opacity-90 transition-opacity flex justify-center items-center"
           >
-            ↓ 导出PDF
+            ↓ 导出记录
           </button>
           <button 
             @click="openAddReminderModal"

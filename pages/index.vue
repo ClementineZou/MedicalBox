@@ -52,8 +52,8 @@
     <!-- Emergency Card Banner -->
     <section v-if="isAuthenticated" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-4 border-l-red-500 rounded-lg shadow-sm p-5 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="flex items-start sm:items-center gap-4">
-        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-full flex-shrink-0">
-            <span class="material-icons-outlined text-3xl text-red-600 dark:text-red-400">medical_information</span>
+        <div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <span class="material-icons-outlined text-3xl text-red-600 dark:text-red-400 leading-none" style="font-size: 32px;">medical_information</span>
         </div>
         <div>
           <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1">医疗急救卡</h2>

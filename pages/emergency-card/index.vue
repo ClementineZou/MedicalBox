@@ -26,7 +26,7 @@
     <div v-else-if="!card || !card.fullName" class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow">
        <span class="material-icons-outlined text-gray-300 text-6xl mb-4">medical_information</span>
        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">您还没有创建急救卡</h2>
-       <p class="text-gray-500 mb-6">创建急救卡可以在紧急情况下帮助医护人员快速了解您的医疗状况。</p>
+       <p class="text-gray-500 mb-6">创建急救卡可以在紧急情况下帮助医护人员快速了解您的医疗状况</p>
        <NuxtLink to="/emergency-card/edit" class="btn-primary inline-flex items-center">
           <span class="material-icons-outlined mr-2">add</span>
           立即创建
