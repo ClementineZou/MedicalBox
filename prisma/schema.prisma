@@ -37,6 +37,7 @@ model User {
   loginHistory         LoginHistory[]
   trustedDevices       TrustedDevice[]
   privacyVerifications PrivacyVerification[]
+  emergencyCard        EmergencyCard?
 }
 
 // 隐私验证记录表
@@ -316,4 +317,28 @@ model VitalSignReferenceRange {
   
   @@index([type])
   @@index([userId])
+}
+
+// 医疗急救卡
+model EmergencyCard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fullName      String   // 姓名
+  birthDate     DateTime? // 出生日期
+  bloodType     String?  // 血型
+  height        Float?   // 身高 (cm)
+  weight        Float?   // 体重 (kg)
+  
+  // 存储 JSON 字符串
+  medicalConditions String? // 既往病史 (JSON array of {code: string, method: string})
+  allergies         String? // 过敏史 (JSON array or simple string)
+  medications       String? // 当前用药 (JSON array or simple string)
+  emergencyContacts String? // 紧急联系人 (JSON array of {name, relation, phone})
+  
+  organDonor        Boolean  @default(false) // 是否器官捐献者
+  notes             String?  // 其他备注
+  
+  updatedAt DateTime @updatedAt
 }

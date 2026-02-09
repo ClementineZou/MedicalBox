@@ -49,6 +49,26 @@
       </div>
     </section>
 
+    <!-- Emergency Card Banner -->
+    <section v-if="isAuthenticated" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-4 border-l-red-500 rounded-lg shadow-sm p-5 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition hover:shadow-md">
+      <div class="flex items-start sm:items-center gap-4">
+        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-full flex-shrink-0">
+            <span class="material-icons-outlined text-3xl text-red-600 dark:text-red-400">medical_information</span>
+        </div>
+        <div>
+          <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1">医疗急救卡</h2>
+          <p class="text-gray-600 dark:text-gray-400 text-sm md:text-base">在紧急情况下的关键信息。支持打印或生成电子卡片。</p>
+        </div>
+      </div>
+       <NuxtLink 
+          to="/emergency-card" 
+          class="w-full sm:w-auto text-center px-6 py-2.5 rounded-lg font-medium bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-900/50 transition flex justify-center items-center gap-2 whitespace-nowrap"
+        >
+          查看急救卡
+          <span class="material-icons-outlined text-sm">arrow_forward</span>
+        </NuxtLink>
+    </section>
+
     <!-- Features Section -->
     <section class="grid md:grid-cols-4 gap-6">
       <div class="bg-white rounded-md-lg shadow-md p-6 flex flex-col items-center justify-center text-center">

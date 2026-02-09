@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import colors from 'tailwindcss/colors'
+
 export default {
   content: [
     "./components/**/*.{js,vue,ts}",
@@ -10,6 +12,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        primary: colors.violet,
         // Material Design 3 color tokens
         'md-primary': 'var(--md-sys-color-primary)',
         'md-on-primary': 'var(--md-sys-color-on-primary)',

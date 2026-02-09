@@ -128,7 +128,7 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons' }
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined' }
       ]
     }
   },
@@ -145,6 +145,10 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       turnstileSiteKey: process.env.TURNSTILE_SITE_KEY,
       googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID
-    }
+    },
+
+    // ICD API Keys
+    icdClientId: process.env.ICD_CLIENT_ID,
+    icdClientSecret: process.env.ICD_CLIENT_SECRET
   }
 })
