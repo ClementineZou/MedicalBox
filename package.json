@@ -23,14 +23,16 @@
     "better-auth": "^1.4.2",
     "chart.js": "^4.5.1",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.4",
     "jsbarcode": "^3.11.6",
+    "jspdf": "^3.0.4",
     "nuxt": "^3.13.0",
     "nuxt-gtag": "^3.0.1",
     "qrcode": "^1.5.4",
     "vue": "^3.4.0",
     "vue-chartjs": "^5.3.3",
-    "vue-router": "^4.4.0"
+    "vue-router": "^4.4.0",
+    "vuedraggable": "^4.1.0",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",

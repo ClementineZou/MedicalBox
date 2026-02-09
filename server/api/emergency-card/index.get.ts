@@ -17,8 +17,10 @@ export default defineEventHandler(async (event) => {
   return {
     ...card,
     medicalConditions: card?.medicalConditions ? JSON.parse(card.medicalConditions) : [],
+    surgicalHistory: card?.surgicalHistory ? JSON.parse(card.surgicalHistory) : [],
     allergies: card?.allergies ? JSON.parse(card.allergies) : [],
     medications: card?.medications ? JSON.parse(card.medications) : [],
-    emergencyContacts: card?.emergencyContacts ? JSON.parse(card.emergencyContacts) : []
+    emergencyContacts: card?.emergencyContacts ? JSON.parse(card.emergencyContacts) : [],
+    insurancePolicies: card?.insurancePolicies ? JSON.parse(card.insurancePolicies) : []
   }
 })

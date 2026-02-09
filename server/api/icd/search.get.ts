@@ -83,13 +83,11 @@ let tokenExpiry: number = 0
 async function getAccessToken(clientId: string, clientSecret: string): Promise<string | null> {
   // Return cached token if still valid (with 5 min buffer)
   if (cachedToken && Date.now() < tokenExpiry - 300000) {
-    console.log('[ICD DEBUG] Using cached token')
     return cachedToken
   }
 
   try {
     const tokenEndpoint = "https://icdaccessmanagement.who.int/connect/token"
-    console.log('[ICD DEBUG] Requesting new token from:', tokenEndpoint)
     
     // BACK TO ORIGINAL TOKEN LOGIC per user instructions
     const formData = new URLSearchParams()
@@ -110,8 +108,6 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
       timeout: 30000,
     })
 
-    console.log('[ICD DEBUG] Token response received. Expires in:', response?.expires_in)
-
     if (response && response.access_token) {
       cachedToken = response.access_token
       tokenExpiry = Date.now() + response.expires_in * 1000
@@ -131,9 +127,8 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
   try {
     // Use MMS Linearization with specific release to support POST and get Codes
     // URL: https://id.who.int/icd/release/11/2024-01/mms/search
-    const releaseId = '2024-01'
+    const releaseId = '2025-01'
     const url = `https://id.who.int/icd/release/11/${releaseId}/mms/search`
-    console.log('[ICD DEBUG] Searching URL (POST):', url)
     
     // Construct Form Data Body
     const searchParams = new URLSearchParams()
@@ -155,10 +150,7 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
       timeout: 30000 
     })
 
-    console.log('[ICD DEBUG] Search raw response destinationEntities count:', data?.destinationEntities?.length ?? 0)
-
     if (data && data.destinationEntities && data.destinationEntities.length > 0) {
-      console.log('[ICD DEBUG] First entity sample:', JSON.stringify(data.destinationEntities[0], null, 2))
       return data.destinationEntities.map((entity) => {
         // Replace <em class='found'> with <strong> tags for frontend rendering
         let title = entity.title
@@ -189,7 +181,6 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
     // --------------------------------------------------------------------------------
     const codePattern = /^[A-Z0-9.]{3,}$/i
     if (codePattern.test(term)) {
-        console.log('[ICD DEBUG] No search results, trying direct code lookup for:', term)
         try {
             const codeUrl = `https://id.who.int/icd/release/11/${releaseId}/mms/codeinfo/${encodeURIComponent(term)}`
             const codeInfo = await $fetch<any>(codeUrl, {
@@ -202,7 +193,6 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
             })
             
             if (codeInfo && codeInfo.linearizationUri) {
-                 console.log('[ICD DEBUG] Code info found, fetching entity details...')
                  // We found the code info, now fetch the Entity details to get the localized Title
                  const entityUrl = codeInfo.linearizationUri
                  const entityData = await $fetch<any>(entityUrl, {
@@ -222,8 +212,6 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
                          title = term // Fallback title
                      }
                      
-                     console.log('[ICD DEBUG] Found entity by code:', title)
-                     
                      return [{
                          term: title,
                          code: entityData.code || term,
@@ -233,18 +221,11 @@ async function searchICD11WithAPI(term: string, token: string): Promise<ICDSearc
             }
         } catch (err: any) {
             // Ignore 404s (code not found)
-            if (err.statusCode !== 404) {
-                console.log('[ICD DEBUG] Code lookup failed:', err.message)
-            }
         }
     }
 
     return []
   } catch (e: any) {
-    console.error("[ICD ERROR] Search API Error:", e.message)
-    if (e.response) {
-        console.error("[ICD ERROR] Search error response:", e.response._data)
-    }
     return []
   }
 }
@@ -257,8 +238,6 @@ export default defineEventHandler(async (event): Promise<ICDSearchResult[]> => {
   const query = getQuery(event)
   const searchTerm = (query.q as string || '').trim()
 
-  console.log('[ICD DEBUG] Incoming search request for:', searchTerm)
-
   if (!searchTerm || searchTerm.length < 1) return []
 
   const config = useRuntimeConfig()
@@ -266,28 +245,17 @@ export default defineEventHandler(async (event): Promise<ICDSearchResult[]> => {
   const clientId = config.icdClientId as string | undefined || process.env.ICD_CLIENT_ID?.trim()
   const clientSecret = config.icdClientSecret as string | undefined || process.env.ICD_CLIENT_SECRET?.trim()
 
-  console.log('[ICD DEBUG] Credentials check - ClientID exists:', !!clientId, 'Secret exists:', !!clientSecret)
-
   if (clientId && clientSecret && clientId !== '' && clientSecret !== '') {
     const token = await getAccessToken(clientId, clientSecret)
     if (token) {
       const apiResults = await searchICD11WithAPI(searchTerm, token)
       if (apiResults.length > 0) {
-        console.log(`[ICD DEBUG] Returning ${apiResults.length} results from API`)
         return apiResults
-      } else {
-        console.log('[ICD DEBUG] API returned 0 results, falling back to mock')
-      }
-    } else {
-        console.warn("[ICD DEBUG] Could not obtain token, falling back to mock")
+      } 
     }
-  } else {
-     console.log("[ICD DEBUG] No API credentials configured, falling back to mock")
   }
 
   // Fallback to Mock Data
-  console.log('[ICD DEBUG] Performing Mock search')
   const mockResults = searchMockData(searchTerm)
-  console.log(`[ICD DEBUG] Mock search returned ${mockResults.length} results`)
   return mockResults
 })

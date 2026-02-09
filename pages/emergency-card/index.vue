@@ -5,7 +5,7 @@
         <span class="material-icons-outlined text-red-600 mr-2 text-4xl">emergency</span>
         医疗急救卡
       </h1>
-      <div class="flex gap-4">
+      <div v-if="card && card.fullName" class="flex gap-4">
          <NuxtLink to="/emergency-card/edit" class="btn-secondary flex items-center">
           <span class="material-icons-outlined mr-2">edit</span>
           编辑
@@ -46,6 +46,10 @@
 </template>
 
 <script setup lang="ts">
+useHead({
+  title: '医疗急救卡'
+})
+
 const { data: card, pending } = await useFetch('/api/emergency-card')
 
 const printCard = () => {

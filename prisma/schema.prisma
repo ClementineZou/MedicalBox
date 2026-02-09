@@ -331,7 +331,29 @@ model EmergencyCard {
   height        Float?   // 身高 (cm)
   weight        Float?   // 体重 (kg)
   
+  // 基础信息
+  gender        String?  // 性别
+  nationality   String?  // 国籍
+  primaryLanguage String? // 常用语言
+  
+  // 保险信息
+  insuranceProvider     String? // 保险公司
+  insurancePolicyNumber String? // 保单号
+  insurancePhone        String? // 保险公司联系电话
+  insuranceNotes        String? // 保险备注
+  
+  // 保险项目列表 JSON
+  insurancePolicies     String? // JSON array of { provider, policyNumber, phone, notes, type, rank }
+
+  // Explicit status flags
+  hasAllergies          Boolean  @default(true)
+  hasMedicalConditions  Boolean  @default(true)
+  hasSurgicalHistory    Boolean  @default(true)
+  hasMedications        Boolean  @default(true)
+  hasInsurance          Boolean  @default(true)
+
   // 存储 JSON 字符串
+  surgicalHistory   String? // 既往手术史 (JSON array)
   medicalConditions String? // 既往病史 (JSON array of {code: string, method: string})
   allergies         String? // 过敏史 (JSON array or simple string)
   medications       String? // 当前用药 (JSON array or simple string)
