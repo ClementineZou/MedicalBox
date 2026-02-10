@@ -398,28 +398,28 @@ function generateLabelHTML(
           ${controlTypeBadge}
         </div>
         ` : ''}
-        
+
         <div class="info-row">
           <span class="info-label">规格</span>
           <span class="info-value">${dosageInfo}</span>
         </div>
-        
-        <div class="info-row">
-          <span class="info-label">用法</span>
-          <span class="info-value">${usageInfo}</span>
-        </div>
-        
+
         <div class="info-row">
           <span class="info-label">适应症</span>
           <span class="info-value">${indicationsInfo}</span>
         </div>
-        
+
+        <div class="info-row">
+          <span class="info-label">用法</span>
+          <span class="info-value">${usageInfo}</span>
+        </div>
+
         <div class="info-row">
           <span class="info-label">有效期</span>
           <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}${isExpiring ? ' ⚠' : ''}</span>
         </div>
       </div>
-        
+
       <div class="label-footer">
         <div class="barcode-field">
           ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
