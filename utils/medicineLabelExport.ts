@@ -32,7 +32,7 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
   const labelsPerColumn = 5
   const labelsPerPage = labelsPerRow * labelsPerColumn
   
-  // 构建打印样式 - 全黑白设计
+  // 构建打印样式 - 简洁美观紧凑版
   const styles = `
     <style>
       @page {
@@ -51,6 +51,8 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         background: #fff;
         padding: 0;
         color: #000;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       
       .page {
@@ -60,9 +62,10 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         display: flex;
         flex-wrap: wrap;
         gap: 5mm;
-        padding: 0;
+        padding-top: 5mm;
         align-items: flex-start;
         align-content: flex-start;
+        justify-content: center;
       }
       
       .page:last-child {
@@ -71,205 +74,182 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       
       .label {
         width: 90mm;
-        min-height: 50mm;
-        border: 2px solid #000;
-        border-radius: 4px;
-        padding: 4mm;
+        height: 50mm;
+        border: 1.5px solid #111;
+        border-radius: 6px;
+        padding: 3mm 4mm;
         display: flex;
         flex-direction: column;
-        position: relative;
         background: #fff;
-        overflow: visible;
+        position: relative;
+        overflow: hidden;
         page-break-inside: avoid;
+        box-shadow: none;
       }
       
-      .label-icon {
-        position: absolute;
-        top: 3mm;
-        right: 3mm;
-        width: 8mm;
-        height: 8mm;
-        opacity: 0.8;
-      }
-      
-      .label-icon svg {
-        width: 100%;
-        height: 100%;
-      }
-      
-      .label-header {
-        margin-bottom: 2mm;
-        padding-right: 10mm;
+      /* 头部区域 */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         border-bottom: 2px solid #000;
-        padding-bottom: 2mm;
+        padding-bottom: 1.5mm;
+        margin-bottom: 1.5mm;
+        min-height: 10mm;
+      }
+      
+      .header-content {
+        flex: 1;
+        overflow: hidden;
+        padding-right: 2mm;
       }
       
       .medicine-name {
-        font-size: 15pt;
-        font-weight: 800;
+        font-size: 14pt;
+        font-weight: 900;
         color: #000;
-        margin-bottom: 1mm;
-        line-height: 1.2;
-        max-height: 12mm;
+        line-height: 1.1;
+        white-space: nowrap;
         overflow: hidden;
+        text-overflow: ellipsis;
       }
       
       .medicine-brand {
-        font-size: 9pt;
-        color: #333;
+        font-size: 8pt;
+        color: #444;
         font-weight: 500;
-        font-style: normal;
+        margin-top: 0.5mm;
       }
-      
-      .label-body {
+
+      .header-icon {
+        width: 6mm;
+        height: 6mm;
+        flex-shrink: 0;
+        opacity: 0.8;
+      }
+
+      .header-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* 主体内容区域 */
+      .content-body {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0;
-        min-height: 0;
+        gap: 1.25mm;
       }
       
-      .badges-row {
+      .row {
         display: flex;
-        flex-wrap: wrap;
+        align-items: baseline;
         gap: 2mm;
-        padding-bottom: 2mm;
-        border-bottom: none;
-        margin-bottom: 0;
-        align-items: center;
-        min-height: 6mm;
-      }
-      
-      .info-row {
-        display: flex;
-        align-items: flex-start;
-        font-size: 9pt;
-        line-height: 1.4;
-        padding: 1.5mm 0;
-        border-bottom: none;
+        line-height: 1.2;
+        font-size: 8.5pt;
       }
 
-      .info-row:last-child {
-        border-bottom: none;
+      .row.badges-row {
+        margin-bottom: 0.5mm;
+      }
+
+      .field {
+        display: flex;
+        gap: 1mm;
+        align-items: baseline;
+        overflow: hidden;
       }
       
-      .info-label {
-        color: #000;
-        min-width: 16mm;
+      .field.flex-1 { flex: 1; }
+      .field.half { width: 48%; }
+      
+      .label-text {
+        font-size: 8pt;
         font-weight: 700;
+        color: #222;
+        white-space: nowrap;
         flex-shrink: 0;
       }
       
-      .info-value {
+      .value-text {
         color: #000;
-        font-weight: 400;
-        flex: 1;
+        font-weight: 500;
+        white-space: nowrap;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        max-height: calc(1.4em * 2);
+        text-overflow: ellipsis;
       }
-      
-      .expiry-warning {
-        font-weight: 800;
-        border-bottom: 1px solid #000;
+
+      .value-text.warning {
+        font-weight: 700;
+        text-decoration: underline;
       }
-      
-      .category-badge, .control-type-badge {
+
+      /* 徽章样式 */
+      .badge {
         display: inline-flex;
         align-items: center;
         padding: 0 1.5mm;
-        height: 4.5mm;
-        border-radius: 2px;
-        font-size: 8pt;
-        font-weight: 600;
+        height: 4mm;
+        border-radius: 3px;
+        font-size: 7pt;
+        font-weight: 700;
         border: 1px solid #000;
         line-height: 1;
-      }
-
-      .control-type-badge {
-        font-weight: 700;
+        white-space: nowrap;
       }
       
-      .control-type-prescription {
-        background: #fff;
-        border-style: solid;
-      }
-      
-      .control-type-otc {
-        background: #fff;
-        border-radius: 50px;
-      }
-      
-      .control-type-psychotropic {
+      .badge.filled {
         background: #000;
         color: #fff;
-        border: 1.5px solid #000;
       }
 
-      .label-footer {
+      /* 底部区域 */
+      .footer {
         margin-top: auto;
-        flex-shrink: 0;
+        padding-top: 1.5mm;
+        border-top: 1px dashed #bbb;
         display: flex;
-        flex-direction: column;
-        gap: 1mm;
-      }
-      
-      .date-field {
-        margin-top: 1mm;
-        margin-bottom: 0;
-        padding-top: 2mm;
-        border-top: 2px solid #000;
-        display: flex;
+        justify-content: space-between;
         align-items: flex-end;
-        gap: 2mm;
-        min-height: 6mm;
-        flex-shrink: 0;
+        height: 10mm;
       }
 
-      .barcode-field {
+      .footer-left {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5mm;
-        margin-top: 1mm;
+        justify-content: flex-end;
+      }
+
+      .open-date-label {
+        font-size: 7pt;
+        font-weight: 700;
+        margin-bottom: 1mm;
+      }
+
+      .open-date-input {
+        width: 25mm;
+        border-bottom: 1px solid #000;
+        height: 3mm;
+      }
+
+      .barcode-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
       }
 
       .barcode-svg {
-        height: 8mm;
+        height: 6mm;
         width: auto;
-        max-width: 60mm;
+        max-width: 50mm;
       }
 
       .barcode-text {
-        font-size: 8pt;
-        font-family: monospace;
+        font-size: 6pt;
+        font-family: Consolas, Monaco, monospace;
         font-weight: 600;
-        color: #000;
-      }
-      
-      .date-label {
-        font-size: 9pt;
-        color: #000;
-        font-weight: 700;
-        white-space: nowrap;
-        margin-bottom: 1mm;
-      }
-      
-      .date-input {
-        flex: 1;
-        border-bottom: 1px solid #000;
-        height: 5mm;
-        margin-bottom: 1mm;
-      }
-      
-      @media print {
-        body {
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
+        margin-top: 0.5mm;
+        letter-spacing: 0.5px;
       }
     </style>
   `
@@ -373,76 +353,85 @@ function generateLabelHTML(
   // 管控类型徽章
   let controlTypeBadge = ''
   if (medicine.controlTypes) {
-    let badgeClass = 'control-type-badge'
+    let badgeClass = 'badge'
     if (medicine.controlTypes.includes('精神药品')) {
-      badgeClass += ' control-type-psychotropic'
-    } else if (medicine.controlTypes.includes('非处方药')) {
-      badgeClass += ' control-type-otc'
-    } else if (medicine.controlTypes.includes('处方药')) {
-      badgeClass += ' control-type-prescription'
+      badgeClass += ' filled'
     }
-    const displayText = medicine.controlTypes.replace(/,/g, '、')
+    // 统一为方形，不再区分 rounded
+    const displayText = medicine.controlTypes.replace(/,/g, ' ')
     controlTypeBadge = `<span class="${badgeClass}">${displayText}</span>`
   }
   
   // 分类徽章
   const categoryBadge = medicine.category 
-    ? `<span class="category-badge">${medicine.category}</span>` 
+    ? `<span class="badge">${medicine.category}</span>` 
     : ''
 
   return `
     <div class="label">
-      <div class="label-icon">
-        ${ICON_SVG}
+      <div class="header">
+        <div class="header-content">
+          <div class="medicine-name">${medicine.name}</div>
+          ${medicine.brand ? `<div class="medicine-brand">${medicine.brand}</div>` : ''}
+        </div>
+        <div class="header-icon">
+          ${ICON_SVG}
+        </div>
       </div>
       
-      <div class="label-header">
-        <div class="medicine-name">${medicine.name}</div>
-        ${medicine.brand ? `<div class="medicine-brand">${medicine.brand}</div>` : ''}
-      </div>
-      
-      <div class="label-body">
+      <div class="content-body">
         ${(categoryBadge || controlTypeBadge) ? `
-        <div class="badges-row">
+        <div class="row badges-row">
           ${categoryBadge}
           ${controlTypeBadge}
         </div>
         ` : ''}
         
-        <div class="info-row">
-          <span class="info-label">规格:</span>
-          <span class="info-value">${dosageInfo}</span>
-        </div>
-        
-        <div class="info-row">
-          <span class="info-label">适应症:</span>
-          <span class="info-value">${indicationsInfo}</span>
-        </div>
-        
-        <div class="info-row">
-          <span class="info-label">用法用量:</span>
-          <span class="info-value">${usageInfo}</span>
-        </div>
-        
-        <div class="info-row">
-          <span class="info-label">有效期:</span>
-          <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}${isExpiring ? ' ⚠' : ''}</span>
-        </div>
-        
-        <div class="label-footer">
-          <div class="date-field">
-            <span class="date-label">开启日期:</span>
-            <div class="date-input"></div>
+        <div class="row">
+          <div class="field flex-1">
+            <span class="label-text">规格:</span>
+            <span class="value-text">${dosageInfo}</span>
           </div>
+          <div class="field flex-1">
+            <span class="label-text">有效期:</span>
+            <span class="value-text ${isExpiring ? 'warning' : ''}">${expiryDateStr}${isExpiring ? '!' : ''}</span>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="field flex-1">
+            <span class="label-text">用法:</span>
+            <span class="value-text">${translateUsage(usageInfo)}</span>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="field flex-1">
+            <span class="label-text">主治:</span>
+            <span class="value-text">${truncateText(indicationsInfo, 24)}</span>
+          </div>
+        </div>
 
-          <div class="barcode-field">
-            ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
-            <div class="barcode-text">${barcode?.barcodeCode || ''}</div>
-          </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-left">
+           <div class="open-date-label">开启日期:</div>
+           <div class="open-date-input"></div>
+        </div>
+
+        <div class="barcode-container">
+          ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
+          <div class="barcode-text">${barcode?.barcodeCode || ''}</div>
         </div>
       </div>
     </div>
   `
+}
+
+// 辅助函数：可以让用法更紧凑
+function translateUsage(usage: string): string {
+    return usage.length > 20 ? truncateText(usage, 20) : usage;
 }
 
 function generateBarcodeSvg(JsBarcode: any, value: string): string {
