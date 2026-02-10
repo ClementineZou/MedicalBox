@@ -11,8 +11,14 @@ const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" 
 
 /**
  * 导出药品标签为PDF
- * 黑白简约设计，适合打印
+ * 紧凑简洁的黑白设计，适合打印
  * 标签尺寸: 90mm x 50mm (适合常见药盒)
+ * 
+ * 设计特点:
+ * - 更小的字体和间距，提升信息密度
+ * - 精简标签文字（去掉冒号等）
+ * - 条形码与启用日期水平排列，节省空间
+ * - 更细的边框和分隔线
  */
 export const exportMedicineLabels = async (medicines: Medicine[]) => {
   // 仅在客户端需要条形码渲染
@@ -32,7 +38,7 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
   const labelsPerColumn = 5
   const labelsPerPage = labelsPerRow * labelsPerColumn
   
-  // 构建打印样式 - 全黑白设计
+  // 构建打印样式 - 紧凑简洁设计
   const styles = `
     <style>
       @page {
@@ -71,25 +77,25 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       
       .label {
         width: 90mm;
-        min-height: 50mm;
-        border: 2px solid #000;
-        border-radius: 4px;
-        padding: 4mm;
+        height: 50mm;
+        border: 1.5px solid #000;
+        border-radius: 3px;
+        padding: 3mm;
         display: flex;
         flex-direction: column;
         position: relative;
         background: #fff;
-        overflow: visible;
+        overflow: hidden;
         page-break-inside: avoid;
       }
       
       .label-icon {
         position: absolute;
-        top: 3mm;
-        right: 3mm;
-        width: 8mm;
-        height: 8mm;
-        opacity: 0.8;
+        top: 2.5mm;
+        right: 2.5mm;
+        width: 6mm;
+        height: 6mm;
+        opacity: 0.7;
       }
       
       .label-icon svg {
@@ -98,27 +104,27 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       }
       
       .label-header {
-        margin-bottom: 2mm;
-        padding-right: 10mm;
-        border-bottom: 2px solid #000;
-        padding-bottom: 2mm;
+        margin-bottom: 1.5mm;
+        padding-right: 8mm;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 1.5mm;
       }
       
       .medicine-name {
-        font-size: 15pt;
-        font-weight: 800;
+        font-size: 13pt;
+        font-weight: 700;
         color: #000;
-        margin-bottom: 1mm;
-        line-height: 1.2;
-        max-height: 12mm;
+        margin-bottom: 0.5mm;
+        line-height: 1.15;
+        max-height: 10mm;
         overflow: hidden;
       }
       
       .medicine-brand {
-        font-size: 9pt;
-        color: #333;
+        font-size: 8pt;
+        color: #444;
         font-weight: 500;
-        font-style: normal;
+        line-height: 1.2;
       }
       
       .label-body {
@@ -132,31 +138,23 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
       .badges-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 2mm;
-        padding-bottom: 2mm;
-        border-bottom: none;
-        margin-bottom: 0;
+        gap: 1.5mm;
+        margin-bottom: 1mm;
         align-items: center;
-        min-height: 6mm;
       }
       
       .info-row {
         display: flex;
         align-items: flex-start;
-        font-size: 9pt;
-        line-height: 1.4;
-        padding: 1.5mm 0;
-        border-bottom: none;
-      }
-
-      .info-row:last-child {
-        border-bottom: none;
+        font-size: 8pt;
+        line-height: 1.3;
+        padding: 1mm 0;
       }
       
       .info-label {
         color: #000;
-        min-width: 16mm;
-        font-weight: 700;
+        min-width: 14mm;
+        font-weight: 600;
         flex-shrink: 0;
       }
       
@@ -166,23 +164,22 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         flex: 1;
         overflow: hidden;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
-        max-height: calc(1.4em * 2);
       }
       
       .expiry-warning {
-        font-weight: 800;
-        border-bottom: 1px solid #000;
+        font-weight: 700;
+        text-decoration: underline;
       }
       
       .category-badge, .control-type-badge {
         display: inline-flex;
         align-items: center;
         padding: 0 1.5mm;
-        height: 4.5mm;
+        height: 4mm;
         border-radius: 2px;
-        font-size: 8pt;
+        font-size: 7pt;
         font-weight: 600;
         border: 1px solid #000;
         line-height: 1;
@@ -212,57 +209,50 @@ export const exportMedicineLabels = async (medicines: Medicine[]) => {
         margin-top: auto;
         flex-shrink: 0;
         display: flex;
-        flex-direction: column;
         gap: 1mm;
+        padding-top: 1.5mm;
+        border-top: 1px solid #ccc;
+        align-items: center;
       }
       
-      .date-field {
-        margin-top: 1mm;
-        margin-bottom: 0;
-        padding-top: 2mm;
-        border-top: 2px solid #000;
-        display: flex;
-        align-items: flex-end;
-        gap: 2mm;
-        min-height: 6mm;
-        flex-shrink: 0;
-      }
-
       .barcode-field {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 0.5mm;
-        margin-top: 1mm;
+        gap: 1.5mm;
+        flex: 1;
       }
 
       .barcode-svg {
-        height: 8mm;
+        height: 7mm;
         width: auto;
-        max-width: 60mm;
+        max-width: 35mm;
       }
 
       .barcode-text {
-        font-size: 8pt;
+        font-size: 7pt;
         font-family: monospace;
-        font-weight: 600;
+        font-weight: 500;
         color: #000;
       }
       
+      .date-field {
+        display: flex;
+        align-items: center;
+        gap: 1mm;
+        flex: 1;
+      }
+
       .date-label {
-        font-size: 9pt;
+        font-size: 7pt;
         color: #000;
-        font-weight: 700;
+        font-weight: 600;
         white-space: nowrap;
-        margin-bottom: 1mm;
       }
       
       .date-input {
         flex: 1;
         border-bottom: 1px solid #000;
-        height: 5mm;
-        margin-bottom: 1mm;
+        height: 4mm;
       }
       
       @media print {
@@ -408,37 +398,36 @@ function generateLabelHTML(
           ${controlTypeBadge}
         </div>
         ` : ''}
-        
+
         <div class="info-row">
-          <span class="info-label">规格:</span>
+          <span class="info-label">规格</span>
           <span class="info-value">${dosageInfo}</span>
         </div>
-        
+
         <div class="info-row">
-          <span class="info-label">适应症:</span>
+          <span class="info-label">适应症</span>
           <span class="info-value">${indicationsInfo}</span>
         </div>
-        
+
         <div class="info-row">
-          <span class="info-label">用法用量:</span>
+          <span class="info-label">用法</span>
           <span class="info-value">${usageInfo}</span>
         </div>
-        
+
         <div class="info-row">
-          <span class="info-label">有效期:</span>
+          <span class="info-label">有效期</span>
           <span class="info-value ${isExpiring ? 'expiry-warning' : ''}">${expiryDateStr}${isExpiring ? ' ⚠' : ''}</span>
         </div>
-        
-        <div class="label-footer">
-          <div class="date-field">
-            <span class="date-label">开启日期:</span>
-            <div class="date-input"></div>
-          </div>
+      </div>
 
-          <div class="barcode-field">
-            ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
-            <div class="barcode-text">${barcode?.barcodeCode || ''}</div>
-          </div>
+      <div class="label-footer">
+        <div class="barcode-field">
+          ${barcode?.barcodeSvg ? barcode.barcodeSvg.replace('<svg', '<svg class="barcode-svg"') : ''}
+          <span class="barcode-text">${barcode?.barcodeCode || ''}</span>
+        </div>
+        <div class="date-field">
+          <span class="date-label">启用</span>
+          <div class="date-input"></div>
         </div>
       </div>
     </div>
