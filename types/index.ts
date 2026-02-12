@@ -13,6 +13,7 @@ export interface Medicine {
   expiryDate: Date | string
   indications?: string
   usage?: string
+  usageNote?: string
   approvalNo?: string
   location?: string
   imageUrl?: string

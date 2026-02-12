@@ -21,7 +21,7 @@
               type="text" 
               class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
               :class="errors.name ? 'border-red-500' : 'border-md-surface-variant'"
-              placeholder="例如：阿莫西林"
+              placeholder="例如：盐酸氟西汀胶囊"
               @blur="validateField('name', form.name)"
             >
             <p v-if="errors.name" class="text-red-500 text-xs mt-1">{{ errors.name }}</p>
@@ -35,7 +35,7 @@
               type="text"
               class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
               :class="errors.brand ? 'border-red-500' : 'border-md-surface-variant'"
-              placeholder="例如：XX制药"
+              placeholder="例如：百忧解"
               @blur="validateField('brand', form.brand)"
             >
             <p v-if="errors.brand" class="text-red-500 text-xs mt-1">{{ errors.brand }}</p>
@@ -116,10 +116,39 @@
               rows="3"
               class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
               :class="errors.usage ? 'border-red-500' : 'border-md-surface-variant'"
-              placeholder="例如：每日3次，每次1粒，饭后服用"
+              placeholder="例如：每日3次，每次1粒"
               @blur="validateField('usage', form.usage)"
             ></textarea>
             <p v-if="errors.usage" class="text-red-500 text-xs mt-1">{{ errors.usage }}</p>
+          </div>
+
+          <!-- 用法标注 -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium mb-1">用法标注</label>
+            <div class="space-y-2">
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  type="button"
+                  v-for="option in usageNoteOptions"
+                  :key="option"
+                  @click="form.usageNote = option"
+                  :class="[
+                    'px-3 py-1 text-sm border rounded-full transition-colors',
+                    form.usageNote === option 
+                      ? 'bg-md-primary text-md-on-primary border-md-primary' 
+                      : 'bg-white text-md-on-surface border-md-surface-variant hover:border-md-primary'
+                  ]"
+                >
+                  {{ option }}
+                </button>
+              </div>
+              <input 
+                v-model="form.usageNote" 
+                type="text"
+                class="w-full px-4 py-2 border border-md-surface-variant rounded-md-sm focus:outline-none focus:border-md-primary"
+                placeholder="选择上方标签或直接输入，例如：饭前30分钟"
+              >
+            </div>
           </div>
 
           <!-- 剂量规格 -->
@@ -132,7 +161,7 @@
                   type="text"
                   class="w-full px-4 py-2 border rounded-md-sm focus:outline-none focus:border-md-primary"
                   :class="errors.dosage ? 'border-red-500' : 'border-md-surface-variant'"
-                  placeholder="例如：500"
+                  placeholder="例如：20"
                   @blur="validateField('dosage', form.dosage)"
                 >
                 <p v-if="errors.dosage" class="text-red-500 text-xs mt-1">{{ errors.dosage }}</p>
@@ -432,6 +461,18 @@ const controlTypeOptions = [
 ]
 const selectedControlTypes = ref<string[]>([])
 
+// 用法标注选项
+const usageNoteOptions = [
+  '饭前',
+  '饭后',
+  '随餐服用',
+  '空腹',
+  '睡前',
+  '醒后',
+  '必要时',
+  '固定时间'
+]
+
 // 提醒相关
 const dailyTimes = ref('1')
 const reminderTimeSlots = ref<string[]>(['08:00'])
@@ -473,6 +514,7 @@ const form = ref({
   quantityUnit: '片',
   indications: '',
   usage: '',
+  usageNote: '',
   expiryDate: '',
   location: '',
   notes: ''
@@ -507,6 +549,7 @@ watch(() => props.medicine, (medicine) => {
       quantityUnit: medicine.quantityUnit || '盒',
       indications: medicine.indications || '',
       usage: medicine.usage || '',
+      usageNote: medicine.usageNote || '',
       expiryDate: toLocalDateString(new Date(medicine.expiryDate)),
       location: medicine.location || '',
       notes: medicine.notes || ''
@@ -527,6 +570,7 @@ watch(() => props.medicine, (medicine) => {
       quantityUnit: '片',
       indications: '',
       usage: '',
+      usageNote: '',
       expiryDate: '',
       location: '',
       notes: ''

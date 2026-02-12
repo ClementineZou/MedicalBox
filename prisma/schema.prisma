@@ -188,6 +188,7 @@ model Medicine {
   quantityUnit String  // 数量单位，下拉选
   indications String?  // 适应症
   usage       String?  // 用法用量
+  usageNote   String?  // 用法标注（如：饭前、饭后）
   notes       String?  // 备注
   expiryDate  DateTime // 有效期
   approvalNo  String?  // 批准文号，可选

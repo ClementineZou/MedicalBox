@@ -86,6 +86,11 @@
         </div>
         
         <div>
+          <p class="text-sm text-md-on-surface-variant">用法标注</p>
+          <p class="mt-1">{{ medicine.usageNote || '-' }}</p>
+        </div>
+        
+        <div>
           <p class="text-sm text-md-on-surface-variant">备注</p>
           <p class="mt-1 whitespace-pre-line">{{ medicine.notes || '-' }}</p>
         </div>

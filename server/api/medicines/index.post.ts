@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
             quantityUnit: body.quantityUnit,
             indications: body.indications,
             usage: body.usage,
+            usageNote: body.usageNote,
             expiryDate: new Date(body.expiryDate),
             location: body.location,
             imageUrl: body.imageUrl,

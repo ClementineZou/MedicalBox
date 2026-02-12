@@ -345,7 +345,10 @@ function generateLabelHTML(
     : '-'
   
   // 用法用量
-  const usageInfo = medicine.usage || '-'
+  let usageInfo = medicine.usage || '-'
+  if (medicine.usageNote) {
+    usageInfo += `【${medicine.usageNote}】`
+  }
   
   // 适应症信息
   const indicationsInfo = medicine.indications || '-'
@@ -431,7 +434,7 @@ function generateLabelHTML(
 
 // 辅助函数：可以让用法更紧凑
 function translateUsage(usage: string): string {
-    return usage.length > 20 ? truncateText(usage, 20) : usage;
+    return usage.length > 30 ? truncateText(usage, 30) : usage;
 }
 
 function generateBarcodeSvg(JsBarcode: any, value: string): string {
