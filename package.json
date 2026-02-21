@@ -24,7 +24,7 @@
     "chart.js": "^4.5.1",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.11.6",
-    "jspdf": "^3.0.4",
+    "jspdf": "^4.2.0",
     "nuxt": "^3.13.0",
     "nuxt-gtag": "^3.0.1",
     "qrcode": "^1.5.4",
